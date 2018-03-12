@@ -1,0 +1,8 @@
+pandas
+numpy
+statsmodels
+ipwidgets
+bokeh
+matplotlib
+scipy
+sklearn
