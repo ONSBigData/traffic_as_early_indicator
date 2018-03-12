@@ -1,6 +1,5 @@
 geopandas
 shapely
-itertools
 dateutil
 holoviews
 seaborn
