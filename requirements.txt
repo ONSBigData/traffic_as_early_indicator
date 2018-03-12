@@ -1,5 +1,3 @@
-
-gc
 warnings
 logging
 re
