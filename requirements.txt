@@ -1,6 +1,5 @@
 geopandas
 shapely
-dateutil
 holoviews
 seaborn
 pandas
