@@ -1,7 +1,7 @@
 pandas
 numpy
 statsmodels
-ipwidgets
+ipywidgets
 bokeh
 matplotlib
 scipy
