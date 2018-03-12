@@ -7,6 +7,7 @@ Created on Mon Nov 27 11:48:26 2017
 """
 
 #%%
+import os
 import sys
 
 import pandas as pd
@@ -32,7 +33,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.decomposition import PCA
 
 #custom modules
-sys.path.append("/home/eddr/Documents/Projects/GDP_nowcasting/scripts")
+file_dir = os.getcwd()
+sys.path.append(file_dir) # assume other scripts are where we are
 import dataset_processing as dat
 #%%
    

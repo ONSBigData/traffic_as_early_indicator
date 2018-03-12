@@ -10,7 +10,7 @@ the traffic flow and GDP data.
 
 
 """
-
+import os
 import sys
 
 import pandas as pd
@@ -31,7 +31,8 @@ from scipy.signal import correlate
 from scipy.stats import linregress
 
 #where our scripts are stored
-sys.path.append("/home/eddr/Documents/Projects/GDP_nowcasting/scripts")
+file_dir = os.getcwd()
+sys.path.append(file_dir) # assume other scripts are where we are
 
 
 #%%

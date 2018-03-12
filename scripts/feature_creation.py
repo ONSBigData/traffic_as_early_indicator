@@ -6,6 +6,7 @@ Created on Mon Nov 27 13:32:29 2017
 @author: eddr
 """
 #%%
+import os
 import sys
 import re
 
@@ -15,8 +16,8 @@ import numpy as np
 import statsmodels.api as sm
 
 import matplotlib.pylab as plt
-
-sys.path.append("/home/eddr/Documents/Projects/GDP_nowcasting/scripts")
+file_dir = os.getcwd()
+sys.path.append(file_dir) # assume other scripts are where we are
 import dataset_processing as dat
 
 #%%
