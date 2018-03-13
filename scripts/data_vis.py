@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
+"""data_vis
 Created on Fri Jan 19 13:53:57 2018
 
-@author: eddr
+@author: Edward Rowland
 
 This module contains code to create Bokeh visualisations in python from 
 the traffic flow and GDP data. 

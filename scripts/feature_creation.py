@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
+"""feature_creation
+
+Contains functions for creating features from the AADF traffic flow set
 Created on Mon Nov 27 13:32:29 2017
 
-@author: eddr
+@author: Edwardb Rowland
 """
 #%%
 import os
@@ -11,11 +13,9 @@ import sys
 import re
 
 import pandas as pd
-import seaborn as sns
 import numpy as np
-import statsmodels.api as sm
 
-import matplotlib.pylab as plt
+
 file_dir = os.getcwd()
 sys.path.append(file_dir) # assume other scripts are where we are
 import dataset_processing as dat

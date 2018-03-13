@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
+"""exploratory_analysis
+
+A module that contains functions for exploratory analysis of traffic and 
+gdp
+
+This contains functions
+
 Created on Mon Nov 27 11:48:26 2017
 
 @author: Edward Rowland
@@ -18,12 +24,9 @@ import itertools as it
 
 import matplotlib.pylab as plt
 import scipy.stats as stats
-import holoviews.plotting.mpl
+
 
 from holoviews.operation import gridmatrix
-
-from sklearn.model_selection import KFold
-from sklearn.model_selection import cross_val_score
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import Imputer 

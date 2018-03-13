@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
+"""dataset_processing
+
 Created on Tue Aug  8 11:13:20 2017
 
 @author: Edward Rowland
@@ -7,13 +8,6 @@ Created on Tue Aug  8 11:13:20 2017
 A module containing functions for processing data for the
 GDP_nowcasting project
 
-Functions:
-    The module contains the following functions
-    
-    - traffic_munguning
-    - load_traffic_data
-    - merge_regions
-    - merge_nuts_regions
 """
 #%%
 import os
