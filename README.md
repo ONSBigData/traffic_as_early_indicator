@@ -21,7 +21,7 @@ This contains several folders
 - figures: .html copies of the visualisations in the notebook
 - scripts: python code called by the notebook to process and analyse
 the data and create the visualisations
-- docs: Contains sphinx
+- docs: Contains sphinx generated documentation
 
 ## Contact
 Dr Edward Rowland
