@@ -1,0 +1,267 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>feature_creation module &#8212; traffic_gdp_report 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-feature_creation">
+<span id="feature-creation-module"></span><h1>feature_creation module<a class="headerlink" href="#module-feature_creation" title="Permalink to this headline">¶</a></h1>
+<p>Created on Mon Nov 27 13:32:29 2017</p>
+<p>&#64;author: eddr</p>
+<dl class="function">
+<dt id="feature_creation.classify_junctions">
+<code class="descclassname">feature_creation.</code><code class="descname">classify_junctions</code><span class="sig-paren">(</span><em>loc</em>, <em>file_regex='.*traffic_gdp_[0-9]'</em>, <em>ext='csv'</em>, <em>messages=False</em>, <em>a_col='a-junction'</em>, <em>b_col='b-junction'</em>, <em>cat_col='rcat'</em>, <em>road_col='road'</em>, <em>cat_suffix='_cats'</em>, <em>class_suffix='_class'</em>, <em>col_dict={'level_1': 'observation_no'</em>, <em>'level_0': 'road_type'}</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/feature_creation.html#classify_junctions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#feature_creation.classify_junctions" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates features to indicate road type of the roads that intersect at
+the junction where the observation was made.</p>
+<p>loc (string): folder location with the datafiles inside
+file_regex (string): regex expression to select the files to load
+ext (string): extension of the files to load
+messages(bool): indicate to print progress messages
+a_col (string): column in where a junction is stored
+b_col (string): column in where b junction is stored
+cat_col (string): column in where road category is stored
+road_col (string): column in where road name where the observation was made</p>
+<blockquote>
+<div>is stored</div></blockquote>
+<dl class="docutils">
+<dt>cat_suffix (string): suffix to add to a_col and b_col to give the column</dt>
+<dd>name for the categories for each of those</dd>
+<dt>class_suffix (string): suffix to add to a_col and b_col to give the column</dt>
+<dd>name for the categories for each of those</dd>
+</dl>
+<p>col_dict (dict): dictionary for renaming columns</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="feature_creation.classify_road">
+<code class="descclassname">feature_creation.</code><code class="descname">classify_road</code><span class="sig-paren">(</span><em>road_names</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/feature_creation.html#classify_road"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#feature_creation.classify_road" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classify_road</p>
+<p>the collection points list the junctions that the data is recorded from,
+a-junction and b-junction. we create a new feature based upon this data
+using the following rules</p>
+<p><a href="#id13"><span class="problematic" id="id14">|data rule            | example                    |  classifiction |
+|--------------------:|</span></a>:————————–:<a href="#id15"><span class="problematic" id="id16">|:---------------|</span></a>
+<a href="#id1"><span class="problematic" id="id2">|</span></a>first character is m | m79                        | Motorway       |
+<a href="#id3"><span class="problematic" id="id4">|</span></a>first character is a | a38                        | a road         |
+<a href="#id5"><span class="problematic" id="id6">|</span></a>first character is b | b3135                      | b road         |
+<a href="#id7"><span class="problematic" id="id8">|</span></a>is ‘la boundary’     | ‘la boundary’              | boundary       |
+<a href="#id9"><span class="problematic" id="id10">|</span></a>other                | church st, caerau, maesteg | minor road     |
+<a href="#id11"><span class="problematic" id="id12">|</span></a>no alphanumeic text  | ”    ”                     | unclassified   |</p>
+<p>works out a type of junction for each junction
+in a list</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>road_names</strong> (<em>Series</em>) – the road names</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Returns</dt>
+<dd>road_type(list) : road types</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="feature_creation.compute_log_transform">
+<code class="descclassname">feature_creation.</code><code class="descname">compute_log_transform</code><span class="sig-paren">(</span><em>loc</em>, <em>messages=False</em>, <em>file_regex='.*traffic_gdp_[0-9]'</em>, <em>feature_str='fd'</em>, <em>prefix='log'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/feature_creation.html#compute_log_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#feature_creation.compute_log_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>compute_log_trasform</p>
+<p>loads data stored in csvs in a folder and applies a log transform to
+specified columns, then saves them as the same filename</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – folder location with the datafiles inside</li>
+<li><strong>messages</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – indicates whether to return printed messages</li>
+<li><strong>file_regex</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – regex expression to select the files to load</li>
+<li><strong>feature_str</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – to identify columns for log_transform</li>
+<li><strong>prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – to add to column names with transformed data</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="feature_creation.compute_ratios">
+<code class="descclassname">feature_creation.</code><code class="descname">compute_ratios</code><span class="sig-paren">(</span><em>loc</em>, <em>file_regex='.*traffic_gdp_[0-9]'</em>, <em>flow_column_text='fd'</em>, <em>all_veh_flow_col='fdall_mv'</em>, <em>messages=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/feature_creation.html#compute_ratios"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#feature_creation.compute_ratios" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="feature_creation.create_ratios">
+<code class="descclassname">feature_creation.</code><code class="descname">create_ratios</code><span class="sig-paren">(</span><em>df</em>, <em>denom</em>, <em>numerators</em>, <em>suffix='_ratio'</em>, <em>inf_to_na=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/feature_creation.html#create_ratios"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#feature_creation.create_ratios" title="Permalink to this definition">¶</a></dt>
+<dd><p>computes ratios of traffic flow for the different vehcile types for each
+observation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>Dataframe</em>) – contains the traffic data</li>
+<li><strong>denom</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column containing denominator value to compute ratios</li>
+<li><strong>numerators</strong> (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.6)"><em>array</em></a>) – column names containing numerator values
+to compute ratios</li>
+<li><strong>suffix</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column name suffix to store the ratio of each traffic
+flow ratio computed here</li>
+<li><strong>inf_to_na</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – change inf values to numpy.na values</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>as passed, with additional columns for the computed</dt>
+<dd><p class="first last">ratios</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">df (Dataframe)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="feature_creation.get_road_cats">
+<code class="descclassname">feature_creation.</code><code class="descname">get_road_cats</code><span class="sig-paren">(</span><em>df</em>, <em>road_col</em>, <em>junc_col</em>, <em>road_cat_col</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/feature_creation.html#get_road_cats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#feature_creation.get_road_cats" title="Permalink to this definition">¶</a></dt>
+<dd><p>finds the DFT road category for intersecting roads at the junction the
+observation was recorded at.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>DataFrame</em>) – road data</li>
+<li><strong>road_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in df that has road names with the DFT
+category</li>
+<li><strong>junc_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in df containing intersecting roads we want
+to find the road for</li>
+<li><strong>road_cat_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column containting the category of road in
+road_col</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">list of road category for roads in junc_col</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">junc_type (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)">list</a>)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="feature_creation.log_transform">
+<code class="descclassname">feature_creation.</code><code class="descname">log_transform</code><span class="sig-paren">(</span><em>df</em>, <em>features=None</em>, <em>prefix='log_'</em>, <em>feature_str='fd'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/feature_creation.html#log_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#feature_creation.log_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates log values for data in specified columns</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>Dataframe</em>) – data with values to transform</li>
+<li><strong>features</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – list of column names with values to covert to log</li>
+<li><strong>prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – prefix to put on new columns with log values</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>the dataframe with new columns containing the log</dt>
+<dd><p class="first last">transform data</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">df (Dataframe)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Edward Rowland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/feature_creation.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

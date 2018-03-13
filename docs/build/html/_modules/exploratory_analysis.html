@@ -1,0 +1,647 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>exploratory_analysis &#8212; traffic_gdp_report 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for exploratory_analysis</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Mon Nov 27 11:48:26 2017</span>
+
+<span class="sd">@author: Edward Rowland</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1">#%%</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="kn">import</span> <span class="nn">holoviews</span> <span class="k">as</span> <span class="nn">hv</span>
+<span class="kn">import</span> <span class="nn">itertools</span> <span class="k">as</span> <span class="nn">it</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">scipy.stats</span> <span class="k">as</span> <span class="nn">stats</span>
+<span class="kn">import</span> <span class="nn">holoviews.plotting.mpl</span>
+
+<span class="kn">from</span> <span class="nn">holoviews.operation</span> <span class="k">import</span> <span class="n">gridmatrix</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">KFold</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">cross_val_score</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="k">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="k">import</span> <span class="n">Imputer</span> 
+
+<span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="k">import</span> <span class="n">Pipeline</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="k">import</span> <span class="n">PCA</span>
+
+<span class="c1">#custom modules</span>
+<span class="n">file_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file_dir</span><span class="p">)</span> <span class="c1"># assume other scripts are where we are</span>
+<span class="kn">import</span> <span class="nn">dataset_processing</span> <span class="k">as</span> <span class="nn">dat</span>
+<span class="c1">#%%</span>
+   
+<div class="viewcode-block" id="feature_hist"><a class="viewcode-back" href="../exploratory_analysis.html#exploratory_analysis.feature_hist">[docs]</a><span class="k">def</span> <span class="nf">feature_hist</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> 
+                 <span class="n">features</span><span class="p">,</span> 
+                 <span class="n">messages</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+                 <span class="n">sample_ratio</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+                 <span class="n">kde_colour</span> <span class="o">=</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span>
+                 <span class="n">kde_line_width</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+                 <span class="n">hist_colour</span> <span class="o">=</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span>
+                 <span class="n">hist_line_width</span><span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+                 <span class="n">hist_alpha</span> <span class="o">=</span> <span class="mf">0.5</span>
+                 <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;feature_hist</span>
+<span class="sd">    </span>
+<span class="sd">    plots a histogram with kernel density estimation for each feature in a df</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        df (DataFrame): the data to plot</span>
+<span class="sd">        features(DataFrame): columns in df containing data to plot</span>
+<span class="sd">        messages (bool): set to true to print out progress messages</span>
+<span class="sd">        sample_ratio (float): the fraction of observations in df to plot </span>
+<span class="sd">            to reduce overplotting and speed up runtime</span>
+<span class="sd">        kde_colour (char): matplotlib colour for kde plot</span>
+<span class="sd">        kde_line_width (float): kde plot line width</span>
+<span class="sd">        hist_colour (char): matplotlib colour for histogram plot</span>
+<span class="sd">        hist_line_width (float): hist plot line width</span>
+<span class="sd">        hist_alpha (float): transparency setting for histogram</span>
+<span class="sd">    </span>
+<span class="sd">    Returns: </span>
+<span class="sd">        plots_lst (list): list of matplotlib plots for each feature</span>
+<span class="sd">        </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">plots_lst</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="c1">#sample for speed with large DataFrames</span>
+    <span class="n">working_df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span> <span class="o">=</span> <span class="n">sample_ratio</span><span class="p">)</span>
+    <span class="c1">#plot histgram for each feature column</span>
+    <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;plotting: &quot;</span> <span class="o">+</span> <span class="n">feature</span><span class="p">)</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">sns</span><span class="o">.</span><span class="n">distplot</span><span class="p">(</span><span class="n">working_df</span><span class="p">[</span><span class="n">feature</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">(),</span>
+                           <span class="n">rug</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                           <span class="n">kde_kws</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;color&quot;</span> <span class="p">:</span> <span class="n">kde_colour</span><span class="p">,</span>
+                                      <span class="s2">&quot;lw&quot;</span> <span class="p">:</span> <span class="n">kde_line_width</span><span class="p">,</span>
+                                      <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="s2">&quot;KDE&quot;</span>
+                                     <span class="p">},</span>
+                           <span class="n">hist_kws</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;histtype&quot;</span><span class="p">:</span> <span class="s2">&quot;step&quot;</span><span class="p">,</span>
+                                       <span class="s2">&quot;linewidth&quot;</span><span class="p">:</span> <span class="n">hist_line_width</span><span class="p">,</span>
+                                       <span class="s2">&quot;color&quot;</span> <span class="p">:</span> <span class="n">hist_colour</span><span class="p">,</span>
+                                       <span class="s2">&quot;alpha&quot;</span> <span class="p">:</span> <span class="n">hist_alpha</span>
+                                      <span class="p">}</span>
+                          <span class="p">)</span>
+        
+        <span class="n">fig</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">feature</span> <span class="o">+</span> <span class="s2">&quot; histogram&quot;</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">feature</span> <span class="o">+</span> <span class="s2">&quot; annual average daily flow&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="n">plots_lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span> <span class="p">(</span><span class="s2">&quot;plotting complete&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">plots_lst</span></div>
+
+<span class="c1">#%%</span>
+    
+<div class="viewcode-block" id="create_grid_scatter"><a class="viewcode-back" href="../exploratory_analysis.html#exploratory_analysis.create_grid_scatter">[docs]</a><span class="k">def</span> <span class="nf">create_grid_scatter</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> 
+                        <span class="n">group_col</span><span class="p">,</span>
+                        <span class="n">bg_colour</span> <span class="o">=</span> <span class="s2">&quot;#efe8e2&quot;</span><span class="p">,</span>
+                        <span class="n">alpha_level</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+                        <span class="n">point_size</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="n">sample_ratio</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+                        <span class="n">messages</span> <span class="o">=</span> <span class="kc">False</span>
+                       <span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;create_grid_scatter</span>
+<span class="sd">    </span>
+<span class="sd">    builds a grid of scatterplots, useful for checking multicolinearity.</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        df (DataFrame) the data to plot</span>
+<span class="sd">        group_col (string): to colour the points by group</span>
+<span class="sd">        bg_colour (string): colour hex code of the background</span>
+<span class="sd">        alpha_level (float): tranparency of plots</span>
+<span class="sd">        point_size (float): size of points on plot</span>
+<span class="sd">        sample_ratio (float): ratio of observations in df to use for speed and </span>
+<span class="sd">            to prevent overplotting</span>
+<span class="sd">        messages (bool): print messages</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            fig (holoviews plot): the grid scatter</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#create dataset</span>
+    <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;creating dataset for plotting...&quot;</span><span class="p">)</span>
+    <span class="n">feats_hv</span> <span class="o">=</span> <span class="n">hv</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span> <span class="o">=</span> <span class="n">sample_ratio</span><span class="p">))</span>
+    <span class="n">grouped_feats_hv</span> <span class="o">=</span> <span class="n">feats_hv</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">group_col</span><span class="p">,</span> 
+                                        <span class="n">container_type</span><span class="o">=</span><span class="n">hv</span><span class="o">.</span><span class="n">NdOverlay</span>
+                                        <span class="p">)</span>
+    <span class="c1">#plot options</span>
+    <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;formatting plot...&quot;</span><span class="p">)</span>
+    <span class="n">plot_opts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">bgcolor</span> <span class="o">=</span> <span class="n">bg_colour</span><span class="p">)</span>
+    <span class="n">style</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha_level</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="n">point_size</span><span class="p">)</span>
+    <span class="c1">#plot</span>
+    <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;plotting&quot;</span><span class="p">)</span>
+    <span class="n">grid_corr</span> <span class="o">=</span> <span class="n">gridmatrix</span><span class="p">(</span><span class="n">grouped_feats_hv</span><span class="p">,</span> <span class="n">diagonal_type</span><span class="o">=</span><span class="n">hv</span><span class="o">.</span><span class="n">Scatter</span><span class="p">)</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">grid_corr</span><span class="p">({</span><span class="s1">&#39;Scatter&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;plot&#39;</span><span class="p">:</span> <span class="n">plot_opts</span><span class="p">,</span> <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="n">style</span><span class="p">}})</span>
+    
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+<span class="c1">#%%</span>
+
+<div class="viewcode-block" id="plot_pearsons"><a class="viewcode-back" href="../exploratory_analysis.html#exploratory_analysis.plot_pearsons">[docs]</a><span class="k">def</span> <span class="nf">plot_pearsons</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;plot_pearsons</span>
+<span class="sd">    </span>
+<span class="sd">    compute persons correlation coefficents and plot in heatmap</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        df (DataFrame): numerical values to plot</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        corr_arr (array): array of correlation coefficients</span>
+<span class="sd">        fig (matplotlib axes): heatmap of correlations</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">corr_arr</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">corr_arr</span><span class="p">,</span>
+                      <span class="n">xticklabels</span> <span class="o">=</span> <span class="n">corr_arr</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                      <span class="n">yticklabels</span> <span class="o">=</span> <span class="n">corr_arr</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">corr_arr</span><span class="p">,</span> <span class="n">fig</span></div>
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="qq_plot"><a class="viewcode-back" href="../exploratory_analysis.html#exploratory_analysis.qq_plot">[docs]</a><span class="k">def</span> <span class="nf">qq_plot</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">distribution</span> <span class="o">=</span> <span class="s2">&quot;norm&quot;</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;qq_plot</span>
+<span class="sd">    </span>
+<span class="sd">    qq plots for each column in features stored in df</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments: </span>
+<span class="sd">        df (dataframe): contains data to be plotted</span>
+<span class="sd">        features (list): names of columns in df to plot</span>
+<span class="sd">        distribution (string) distribution to check data against</span>
+
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span> 
+        <span class="n">stats</span><span class="o">.</span><span class="n">probplot</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">feature</span><span class="p">],</span> <span class="n">dist</span> <span class="o">=</span> <span class="n">distribution</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="n">plt</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>    
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span></div>
+        
+<span class="c1">#%%     </span>
+<div class="viewcode-block" id="linearity_plots"><a class="viewcode-back" href="../exploratory_analysis.html#exploratory_analysis.linearity_plots">[docs]</a><span class="k">def</span> <span class="nf">linearity_plots</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">nuts_val</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;linearity_plots </span>
+<span class="sd">    </span>
+<span class="sd">    Creates plots to check for non-linearities in features vs the DV.</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        df (DataFrame): contains data to plot</span>
+<span class="sd">        features (list): column names of the IVs to check against the DV</span>
+<span class="sd">        nuts_val (string): column name of the DV</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        fig_lst (list): list of seaborne (matplotlib) plot objects for</span>
+<span class="sd">            the plot of each IV vs DV</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+   
+    <span class="n">df</span><span class="o">.</span><span class="n">replace</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">nuts_mask</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">nuts_val</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">()</span>
+    <span class="n">fig_lst</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+        <span class="n">feat_mask</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">feature</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">()</span>
+        <span class="c1">#only plot data we have values for</span>
+        <span class="n">null_mask</span> <span class="o">=</span> <span class="n">feat_mask</span> <span class="o">&amp;</span> <span class="n">nuts_mask</span>
+        
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">sns</span><span class="o">.</span><span class="n">jointplot</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">feature</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">nuts_val</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">null_mask</span><span class="p">])</span>
+        <span class="n">fig_lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+        
+    <span class="k">return</span> <span class="n">fig_lst</span></div>
+        
+<span class="c1">#%%</span>
+
+<div class="viewcode-block" id="loadings_plot"><a class="viewcode-back" href="../exploratory_analysis.html#exploratory_analysis.loadings_plot">[docs]</a><span class="k">def</span> <span class="nf">loadings_plot</span><span class="p">(</span><span class="n">PCA_data</span><span class="p">,</span> 
+                  <span class="n">coeff</span><span class="p">,</span> 
+                  <span class="n">labels</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                  <span class="n">x_comp</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                  <span class="n">y_comp</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                  <span class="n">alpha_level</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+                  <span class="n">arrow_colour</span> <span class="o">=</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span>
+                  <span class="n">text_colour</span> <span class="o">=</span> <span class="s2">&quot;g&quot;</span><span class="p">,</span>
+                  <span class="n">dots_per_inch</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+                  <span class="n">size</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                  <span class="n">text_size</span> <span class="o">=</span> <span class="s2">&quot;small&quot;</span>
+                 <span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;loadings_plot</span>
+<span class="sd">    </span>
+<span class="sd">    Create a loadings plot to show the influence of each feature on a component</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        PCA_data </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#get the PC scores to plot</span>
+    <span class="n">x_score</span> <span class="o">=</span> <span class="n">PCA_data</span><span class="p">[:,</span> <span class="n">x_comp</span><span class="p">]</span>
+    <span class="n">y_score</span> <span class="o">=</span> <span class="n">PCA_data</span><span class="p">[:,</span> <span class="n">y_comp</span><span class="p">]</span>
+    
+    <span class="n">scale_x</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="n">x_score</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">x_score</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+    <span class="n">scale_y</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="n">y_score</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">y_score</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+    <span class="n">n_features</span> <span class="o">=</span> <span class="n">coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">dpi</span> <span class="o">=</span><span class="n">dots_per_inch</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x_score</span> <span class="o">*</span> <span class="n">scale_x</span><span class="p">,</span> 
+                <span class="n">y_score</span> <span class="o">*</span> <span class="n">scale_y</span><span class="p">,</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="n">size</span><span class="p">)</span>
+    
+    <span class="c1">#set the text for the arrow if none is given</span>
+    <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> 
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Var&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">feat</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_features</span><span class="p">)]</span>
+        
+    <span class="c1">#plot each feature arrow with label</span>
+    <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_features</span><span class="p">):</span>
+        <span class="c1">#plot the arrow</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">arrow</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span>
+                  <span class="mi">0</span><span class="p">,</span> 
+                  <span class="n">coeff</span><span class="p">[</span><span class="n">feature</span><span class="p">,</span> <span class="n">x_comp</span><span class="p">],</span>
+                  <span class="n">coeff</span><span class="p">[</span><span class="n">feature</span><span class="p">,</span> <span class="n">y_comp</span><span class="p">],</span>
+                  <span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha_level</span><span class="p">,</span>
+                  <span class="n">color</span> <span class="o">=</span> <span class="n">arrow_colour</span>
+                 <span class="p">)</span>
+        
+        <span class="c1">#plot the text for the arrow</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">coeff</span><span class="p">[</span><span class="n">feature</span><span class="p">,</span> <span class="n">x_comp</span><span class="p">]</span><span class="o">*</span> <span class="mf">1.15</span><span class="p">,</span> 
+                 <span class="n">coeff</span><span class="p">[</span><span class="n">feature</span><span class="p">,</span> <span class="n">y_comp</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.15</span><span class="p">,</span>
+                 <span class="n">labels</span><span class="p">[</span><span class="n">feature</span><span class="p">],</span>
+                 <span class="n">color</span> <span class="o">=</span> <span class="n">text_colour</span><span class="p">,</span> 
+                 <span class="n">ha</span> <span class="o">=</span> <span class="s1">&#39;center&#39;</span><span class="p">,</span> 
+                 <span class="n">va</span> <span class="o">=</span> <span class="s1">&#39;center&#39;</span><span class="p">,</span>
+                 <span class="n">size</span> <span class="o">=</span> <span class="n">text_size</span>
+                <span class="p">)</span>    </div>
+
+<span class="c1">#%%</span>
+
+<div class="viewcode-block" id="all_descriptive_stats"><a class="viewcode-back" href="../exploratory_analysis.html#exploratory_analysis.all_descriptive_stats">[docs]</a><span class="k">def</span> <span class="nf">all_descriptive_stats</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> 
+                          <span class="n">stats_for</span><span class="p">,</span>
+                          <span class="n">file_year_col</span> <span class="o">=</span> <span class="s2">&quot;aadfyear&quot;</span><span class="p">,</span>
+                          <span class="n">file_regex</span> <span class="o">=</span> <span class="s2">&quot;.*traffic_gdp_[0-9]&quot;</span><span class="p">,</span>
+                          <span class="n">ext</span> <span class="o">=</span> <span class="s2">&quot;csv&quot;</span><span class="p">,</span>
+                          <span class="n">messages</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                          <span class="n">rcat_col</span> <span class="o">=</span> <span class="s2">&quot;rcat&quot;</span><span class="p">,</span>
+                          <span class="n">nuts2_col</span> <span class="o">=</span> <span class="s2">&quot;nuts2_name&quot;</span><span class="p">,</span>
+                          <span class="n">nuts3_col</span> <span class="o">=</span> <span class="s2">&quot;nuts3_name&quot;</span><span class="p">,</span>
+                          <span class="n">area_col_suffix</span> <span class="o">=</span> <span class="s2">&quot;_name&quot;</span><span class="p">,</span>
+                          <span class="n">veh_col</span> <span class="o">=</span> <span class="s2">&quot;vehicle_measure&quot;</span><span class="p">,</span>
+                          <span class="n">area_name_col</span> <span class="o">=</span> <span class="s2">&quot;area_name&quot;</span><span class="p">,</span>
+                          <span class="n">area_level_col</span> <span class="o">=</span> <span class="s2">&quot;area_level&quot;</span><span class="p">,</span>
+                          <span class="n">year_col</span> <span class="o">=</span> <span class="s2">&quot;year&quot;</span><span class="p">,</span>
+                          <span class="n">gdp_col</span> <span class="o">=</span> <span class="s2">&quot;gdp&quot;</span><span class="p">,</span>
+                          <span class="n">gdp_unit_col</span> <span class="o">=</span> <span class="s2">&quot;gdp_unit&quot;</span><span class="p">,</span>
+                          <span class="n">road_all_indicator</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+                          <span class="n">test_range</span> <span class="o">=</span> <span class="kc">None</span>
+                         <span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;compute_descriptive_stats</span>
+<span class="sd">    </span>
+<span class="sd">    Computes descriptive stats with pandas describe function for NUTS2 &amp; 3 </span>
+<span class="sd">    areas to compare against that area&#39;s gdp.</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        loc (string): folder location with the datafiles inside</span>
+<span class="sd">        file_regex (string): regex expression to select the files to load</span>
+<span class="sd">        ext (string): extension of the files to load</span>
+<span class="sd">        messages(bool): indicate to print progress messages</span>
+<span class="sd">        stats_for (list): List of columns that we want to aggreagate.</span>
+<span class="sd">        file_year_col (string): column in file where the year of the</span>
+<span class="sd">            observations are stored.</span>
+<span class="sd">        rcat_col (string): Column in df that stores the road category.</span>
+<span class="sd">        nuts2_col (string): Column in df that stores the nuts2 category.</span>
+<span class="sd">        nuts3_col (string): Column in df that stores the nuts3 category.</span>
+<span class="sd">        area_col_suffix (string): Suffix to add to the nuts level that gives</span>
+<span class="sd">            the column in df that stores the area name.</span>
+<span class="sd">        veh_col (string): Name of the column in describe_df where the traffic</span>
+<span class="sd">            flow measure is stored</span>
+<span class="sd">        area_name_col (string): Name of the column in describe_df where the </span>
+<span class="sd">            area name is stored.</span>
+<span class="sd">        area_level_col (string): Name of the column in describe_df where the </span>
+<span class="sd">            nuts level is stored.</span>
+<span class="sd">        year_level_col (string): Name of the column in describe_df where the </span>
+<span class="sd">            year is stored.</span>
+<span class="sd">        gdp_col (string): Name of the column in describe_df where the </span>
+<span class="sd">            gdp value is stored.</span>
+<span class="sd">        gdp_unit_col (string): Name of the column in describe_df where the </span>
+<span class="sd">            gdp unit is stored.</span>
+<span class="sd">        road_all_indicator (string): Value in rcat_col in describe_df that</span>
+<span class="sd">            corrisponds to stats for all road categories</span>
+<span class="sd">            </span>
+<span class="sd">    Returns: </span>
+<span class="sd">        describe_df (DataFrame): Contains descriptive stats by road type </span>
+<span class="sd">        and NUTS area for observations in df</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1"># these are the files that store the data we want to iterate over</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">files_looks_like</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">looks_like</span> <span class="o">=</span> <span class="n">file_regex</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">ext</span><span class="p">)</span>
+    <span class="n">df_lst</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    
+    <span class="c1">#for testing a limited range of the files in loc to see if this works</span>
+    <span class="c1">#as it takes a while with all of them</span>
+    <span class="k">if</span> <span class="n">test_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> 
+        <span class="n">files</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">test_range</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Testing with: </span><span class="si">%s</span><span class="s2"> &quot;</span> <span class="o">%</span><span class="n">files</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loading file </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="c1">#get the year, assuming all data corrisponds to the same year</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">file_year_col</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;year: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">year</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;computing stats...&quot;</span><span class="p">)</span>
+        
+        <span class="c1">#get a list of dataframes with stats</span>
+        <span class="n">stats_df</span> <span class="o">=</span> <span class="n">compute_descriptive_stats</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> 
+                                    <span class="n">year</span><span class="p">,</span> 
+                                    <span class="n">stats_for</span><span class="p">,</span>
+                                    <span class="n">rcat_col</span> <span class="o">=</span> <span class="n">rcat_col</span><span class="p">,</span>
+                                    <span class="n">nuts2_col</span> <span class="o">=</span> <span class="n">nuts2_col</span><span class="p">,</span>
+                                    <span class="n">nuts3_col</span> <span class="o">=</span> <span class="n">nuts3_col</span><span class="p">,</span>
+                                    <span class="n">area_col_suffix</span> <span class="o">=</span> <span class="n">area_col_suffix</span> <span class="p">,</span>
+                                    <span class="n">veh_col</span> <span class="o">=</span> <span class="n">veh_col</span><span class="p">,</span>
+                                    <span class="n">area_name_col</span> <span class="o">=</span> <span class="n">area_name_col</span><span class="p">,</span>
+                                    <span class="n">area_level_col</span> <span class="o">=</span> <span class="n">area_level_col</span><span class="p">,</span>
+                                    <span class="n">year_col</span> <span class="o">=</span> <span class="n">year_col</span><span class="p">,</span>
+                                    <span class="n">gdp_col</span> <span class="o">=</span> <span class="n">gdp_col</span><span class="p">,</span>
+                                    <span class="n">gdp_unit_col</span> <span class="o">=</span> <span class="n">gdp_unit_col</span><span class="p">,</span>
+                                    <span class="n">road_all_indicator</span> <span class="o">=</span> <span class="n">road_all_indicator</span>
+                                            <span class="p">)</span>
+        <span class="n">stats_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>                     
+        <span class="n">df_lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stats_df</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...done&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;file year: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">df_lst</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">year</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;concatenating&quot;</span><span class="p">)</span>
+    <span class="n">descriptive_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">df_lst</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;done&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">descriptive_df</span></div>
+
+<span class="c1">#%%</span>
+        
+<div class="viewcode-block" id="compute_descriptive_stats"><a class="viewcode-back" href="../exploratory_analysis.html#exploratory_analysis.compute_descriptive_stats">[docs]</a><span class="k">def</span> <span class="nf">compute_descriptive_stats</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> 
+                              <span class="n">year</span><span class="p">,</span>                              
+                              <span class="n">stats_for</span><span class="p">,</span>
+                              <span class="n">rcat_col</span> <span class="o">=</span> <span class="s2">&quot;rcat&quot;</span><span class="p">,</span>
+                              <span class="n">nuts2_col</span> <span class="o">=</span> <span class="s2">&quot;nuts2_name&quot;</span><span class="p">,</span>
+                              <span class="n">nuts3_col</span> <span class="o">=</span> <span class="s2">&quot;nuts3_name&quot;</span><span class="p">,</span>
+                              <span class="n">area_col_suffix</span> <span class="o">=</span> <span class="s2">&quot;_name&quot;</span><span class="p">,</span>
+                              <span class="n">growth_col_suffix</span> <span class="o">=</span> <span class="s2">&quot;_growth&quot;</span><span class="p">,</span>
+                              <span class="n">ratio_col_suffix</span> <span class="o">=</span> <span class="s2">&quot;_gdp_ratio&quot;</span><span class="p">,</span>
+                              <span class="n">veh_col</span> <span class="o">=</span> <span class="s2">&quot;vehicle_measure&quot;</span><span class="p">,</span>
+                              <span class="n">area_name_col</span> <span class="o">=</span> <span class="s2">&quot;area_name&quot;</span><span class="p">,</span>
+                              <span class="n">area_level_col</span> <span class="o">=</span> <span class="s2">&quot;area_level&quot;</span><span class="p">,</span>
+                              <span class="n">year_col</span> <span class="o">=</span> <span class="s2">&quot;year&quot;</span><span class="p">,</span>
+                              <span class="n">gdp_col</span> <span class="o">=</span> <span class="s2">&quot;gdp&quot;</span><span class="p">,</span>
+                              <span class="n">gdp_unit_col</span> <span class="o">=</span> <span class="s2">&quot;gdp_unit&quot;</span><span class="p">,</span>
+                              <span class="n">growth_col</span> <span class="o">=</span> <span class="s2">&quot;gdp_growth&quot;</span><span class="p">,</span>
+                              <span class="n">ratio_col</span> <span class="o">=</span> <span class="s2">&quot;gdp_ratio&quot;</span><span class="p">,</span>
+                              <span class="n">road_all_indicator</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span>
+                              <span class="n">national</span> <span class="o">=</span> <span class="s2">&quot;nat&quot;</span><span class="p">,</span>
+                              <span class="n">nat_level</span> <span class="o">=</span> <span class="s2">&quot;nuts1&quot;</span><span class="p">,</span>
+                              <span class="n">nat_gdp_col</span> <span class="o">=</span> <span class="s2">&quot;gdp&quot;</span><span class="p">,</span>
+                              <span class="n">nat_gdp_unit_col</span> <span class="o">=</span> <span class="s2">&quot;gdp_unit&quot;</span><span class="p">,</span>
+                              <span class="n">nat_gdp_growth_col</span> <span class="o">=</span> <span class="s2">&quot;gdp_growth&quot;</span>
+                              
+                              <span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;compute_descriptive_stats</span>
+<span class="sd">    </span>
+<span class="sd">    Computes descriptive stats with pandas describe function for NUTS2 &amp; 3 </span>
+<span class="sd">    areas to compare against that area&#39;s gdp.</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        df (DataFrame): Contains the traffic data by observation point that</span>
+<span class="sd">            we wish to aggregate</span>
+<span class="sd">        year (string): Year the df corresponds to.</span>
+<span class="sd">        stats_for (list): List of columns that we want to aggreagate.</span>
+<span class="sd">        rcat_col (string): Column in df that stores the road category.</span>
+<span class="sd">        nuts2_col (string): Column in df that stores the nuts2 category.</span>
+<span class="sd">        nuts3_col (string): Column in df that stores the nuts3 category.</span>
+<span class="sd">        area_col_suffix (string): Suffix to add to the nuts level that gives</span>
+<span class="sd">            the column in df that stores the area name.</span>
+<span class="sd">        growth_col_suffix (string): Suffix to add to the nuts level that gives</span>
+<span class="sd">            the column in df that stores the gdp growth.</span>
+<span class="sd">        ratio_col_suffix (string): Suffix to add to the nuts level that gives</span>
+<span class="sd">            the column in df that stores the gdp ratio on previous year.</span>
+<span class="sd">        veh_col (string): Name of the column in describe_df where the traffic</span>
+<span class="sd">            flow measure is stored</span>
+<span class="sd">        area_name_col (string): Name of the column in describe_df where the </span>
+<span class="sd">            area name is stored.</span>
+<span class="sd">        area_level_col (string): Name of the column in describe_df where the </span>
+<span class="sd">            nuts level is stored.</span>
+<span class="sd">        year_level_col (string): Name of the column in describe_df where the </span>
+<span class="sd">            year is stored.</span>
+<span class="sd">        gdp_col (string): Name of the column in describe_df where the </span>
+<span class="sd">            gdp value is stored.</span>
+<span class="sd">        gdp_unit_col (string): Name of the column in describe_df where the </span>
+<span class="sd">            gdp unit is stored.</span>
+<span class="sd">        growth_col (string): Name of the column in describe_df where the </span>
+<span class="sd">            gdp growth value is stored.</span>
+<span class="sd">        ratio_col (string): Name of the column in describe_df where the </span>
+<span class="sd">            gdp ratio on previous year value is stored.</span>
+<span class="sd">        road_all_indicator (string): Value in rcat_col in describe_df that</span>
+<span class="sd">            corrisponds to stats for all road categories,</span>
+<span class="sd">        national (string): label to go in df[area_col] indicating this is</span>
+<span class="sd">            stats for the nation</span>
+<span class="sd">        nat_level (string): label to go in df[area_level_col] indicating this </span>
+<span class="sd">            is stats for the nation    </span>
+<span class="sd">            </span>
+<span class="sd">    Returns: </span>
+<span class="sd">        describe_df (DataFrame): Contains descriptive stats by road type </span>
+<span class="sd">        and NUTS area for observations in df</span>
+<span class="sd">        </span>
+<span class="sd">    Todo:</span>
+<span class="sd">        refactor with yearly descriptive stats, see comments</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stats_lst</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    
+    <span class="n">nuts2_areas</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">nuts2_col</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">nuts3_areas</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">nuts3_col</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+    <span class="n">road_cats</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">rcat_col</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">road_cats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">road_all_indicator</span><span class="p">)</span>
+
+    <span class="c1">#combine nuts2 and nuts3 areas</span>
+    <span class="n">nuts_areas</span> <span class="o">=</span> <span class="p">[(</span><span class="n">area</span><span class="p">,</span> <span class="s2">&quot;nuts2&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">area</span> <span class="ow">in</span> <span class="n">nuts2_areas</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">area</span> <span class="ow">in</span> <span class="n">nuts3_areas</span><span class="p">:</span> <span class="n">nuts_areas</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">area</span><span class="p">,</span> <span class="s2">&quot;nuts3&quot;</span><span class="p">))</span>
+    <span class="n">nuts_areas</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">national</span><span class="p">,</span> <span class="n">nat_level</span><span class="p">))</span> <span class="c1">#all areas</span>
+    
+    <span class="c1">#flat is better than nested</span>
+    <span class="k">for</span> <span class="n">product</span> <span class="ow">in</span> <span class="n">it</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">nuts_areas</span><span class="p">,</span> <span class="n">road_cats</span><span class="p">):</span>
+      
+        <span class="c1">#unpack</span>
+        <span class="n">area_name</span> <span class="o">=</span> <span class="n">product</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">area_col</span> <span class="o">=</span> <span class="n">product</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">road_cat</span> <span class="o">=</span> <span class="n">product</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        
+        <span class="c1">#subselect by nuts area and road category</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">area_name</span> <span class="ow">is</span> <span class="n">national</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">road_cat</span> <span class="ow">is</span> <span class="n">road_all_indicator</span><span class="p">)</span> <span class="p">:</span>
+            <span class="c1"># include everything</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">area_name</span> <span class="ow">is</span> <span class="n">national</span><span class="p">:</span>
+            <span class="c1"># all of a particular road in the nation</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">rcat_col</span><span class="p">]</span> <span class="o">==</span>  <span class="n">road_cat</span> 
+        <span class="k">elif</span> <span class="n">road_cat</span> <span class="ow">is</span> <span class="n">road_all_indicator</span><span class="p">:</span>
+            <span class="c1"># all roads in a nuts area</span>
+            <span class="n">mask</span> <span class="o">=</span>  <span class="n">df</span><span class="p">[</span><span class="n">area_col</span> <span class="o">+</span> <span class="n">area_col_suffix</span><span class="p">]</span> <span class="o">==</span> <span class="n">area_name</span>  
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">#only certain road types in a nuts area</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="p">((</span><span class="n">df</span><span class="p">[</span><span class="n">area_col</span> <span class="o">+</span> <span class="n">area_col_suffix</span><span class="p">]</span> <span class="o">==</span> <span class="n">area_name</span><span class="p">)</span>
+                    <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">rcat_col</span><span class="p">]</span> <span class="o">==</span> <span class="n">road_cat</span><span class="p">)</span>
+                   <span class="p">)</span>
+   
+        <span class="c1">#to store data in tall format wrt measure type</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">][</span><span class="n">stats_for</span><span class="p">]</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;index&quot;</span> <span class="p">:</span> <span class="n">veh_col</span><span class="p">},</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+        
+        <span class="c1">#we know what this responds to</span>
+        <span class="n">stats</span><span class="p">[</span><span class="n">area_name_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">area_name</span>
+        <span class="n">stats</span><span class="p">[</span><span class="n">area_level_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">area_col</span>
+        <span class="n">stats</span><span class="p">[</span><span class="n">year_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">year</span>
+        <span class="n">stats</span><span class="p">[</span><span class="n">rcat_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">road_cat</span>
+        
+        <span class="c1">#get the gdp...</span>
+        
+        <span class="k">if</span> <span class="n">area_name</span> <span class="ow">is</span> <span class="n">national</span><span class="p">:</span> 
+            <span class="c1">#...of the nation</span>
+            <span class="c1">#take first value as they are all the same</span>
+            <span class="n">stats</span><span class="p">[</span><span class="n">gdp_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">nat_gdp_col</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">stats</span><span class="p">[</span><span class="n">gdp_unit_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">nat_gdp_unit_col</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">stats</span><span class="p">[</span><span class="n">growth_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">nat_gdp_growth_col</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            
+            <span class="n">stats</span><span class="p">[</span><span class="n">ratio_col</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">nat_gdp_col</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">100</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">#...of each nuts area</span>
+            <span class="n">area_mask</span> <span class="o">=</span>  <span class="n">df</span><span class="p">[</span><span class="n">area_col</span> <span class="o">+</span> <span class="n">area_col_suffix</span><span class="p">]</span> <span class="o">==</span> <span class="n">area_name</span>
+            <span class="n">stats</span><span class="p">[</span><span class="n">gdp_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">area_mask</span><span class="p">][</span><span class="n">area_col</span><span class="o">+</span><span class="s2">&quot;_value&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">stats</span><span class="p">[</span><span class="n">gdp_unit_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">area_mask</span><span class="p">][</span><span class="n">area_col</span><span class="o">+</span><span class="s2">&quot;_unit&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">stats</span><span class="p">[</span><span class="n">growth_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">area_mask</span><span class="p">][</span><span class="n">area_col</span> 
+                                              <span class="o">+</span> <span class="n">growth_col_suffix</span>
+                                             <span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">stats</span><span class="p">[</span><span class="n">ratio_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">area_mask</span><span class="p">][</span><span class="n">area_col</span> 
+                                             <span class="o">+</span> <span class="n">ratio_col_suffix</span>
+                                            <span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">stats_lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stats</span><span class="p">)</span>  
+    
+    <span class="n">describe_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">stats_lst</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">describe_df</span></div>
+
+
+    
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="compute_PCs"><a class="viewcode-back" href="../exploratory_analysis.html#exploratory_analysis.compute_PCs">[docs]</a><span class="k">def</span> <span class="nf">compute_PCs</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span>
+                <span class="n">strat</span> <span class="o">=</span> <span class="s2">&quot;median&quot;</span><span class="p">,</span>
+                <span class="n">n_comp</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;compute_PCs</span>
+<span class="sd">    </span>
+<span class="sd">    standardises and imputes data then computes principle components</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments: </span>
+<span class="sd">        df (DataFrame): the data to find the PCs of</span>
+<span class="sd">        features (list): columns in df with the independent variables</span>
+<span class="sd">        strategy (string): imputation strategy</span>
+<span class="sd">        n_comp (int): number of principle components </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#create arrays</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">features</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    
+    <span class="c1">#create pipeline for data processing</span>
+    
+    <span class="n">pipe_steps</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="n">pipe_steps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;impute&quot;</span><span class="p">,</span> <span class="n">Imputer</span><span class="p">(</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">strat</span><span class="p">)))</span>
+    <span class="n">pipe_steps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;scale&quot;</span><span class="p">,</span> <span class="n">StandardScaler</span><span class="p">()))</span>
+    <span class="n">pca_pipe</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">(</span><span class="n">pipe_steps</span><span class="p">)</span>    
+    
+    <span class="n">pca</span> <span class="o">=</span> <span class="n">PCA</span><span class="p">()</span>
+    <span class="n">pca</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">pca_pipe</span><span class="p">(</span><span class="n">X</span><span class="p">))</span></div>
+    
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Edward Rowland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,424 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>data_vis module &#8212; traffic_gdp_report 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-data_vis">
+<span id="data-vis-module"></span><h1>data_vis module<a class="headerlink" href="#module-data_vis" title="Permalink to this headline">¶</a></h1>
+<p>Created on Fri Jan 19 13:53:57 2018</p>
+<p>&#64;author: eddr</p>
+<p>This module contains code to create Bokeh visualisations in python from
+the traffic flow and GDP data.</p>
+<dl class="function">
+<dt id="data_vis.create_sources">
+<code class="descclassname">data_vis.</code><code class="descname">create_sources</code><span class="sig-paren">(</span><em>df, traffic_feature, nuts_level, region_name, gdp_feature=['GDP Growth', 'gdp'], nuts_col='area_level', region_col='area_name'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/data_vis.html#create_sources"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#data_vis.create_sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates sources for the joint_plot</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>df</strong> (<em>DataFrame</em>) – data for the joint plot</li>
+<li><strong>nuts_level</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – heirarcical level for the region to create the
+jointplot for</li>
+<li><strong>region_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – name of the region to create the jointplot for</li>
+<li><strong>gdp_feature</strong> (<em>List</em>) – columns in df containing gdp data</li>
+<li><strong>nuts_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in df containing the nuts level for the
+region</li>
+<li><strong>region_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in df containing the region name for the
+data to plot</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>returns source_list (List): data for joint_plot. Contains three</dt>
+<dd>ColumnDataSource objects. The first two contain the data for the pdf
+plots on the x and y axis. The third contains the data for the scatter
+plot.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="data_vis.cross_correlation_charts">
+<code class="descclassname">data_vis.</code><code class="descname">cross_correlation_charts</code><span class="sig-paren">(</span><em>df, data_cols, key_names, colour={3: ['#1f77b4', '#ff7f0e', '#2ca02c'], 4: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'], 5: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'], 6: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'], 7: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2'], 8: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f'], 9: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22'], 10: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']}, corr_col='gdp_growth', x_label='Lag (years)', y_label='Signal overlap', tb_loc='right', plot_x=1000, plot_y=400, lag_line_col='black', lag_line_alpha=0.75, lag_line_dash='dashed'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/data_vis.html#cross_correlation_charts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#data_vis.cross_correlation_charts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a tabbed bokeh plot with multiple data series’ cross correlation
+function with a single other series with a line and label on the chart
+that gives the lag with the highest signal overlap.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>DataFrame</em>) – contains data to plot</li>
+<li><strong>data_cols</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – columns in src containing data to plot, if not
+passed, it plots all columns</li>
+<li><strong>key_names</strong> (<em>List</em>) – more readable names for data_cols, if not passed
+data_cols is used</li>
+<li><strong>x_label</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – x axis label</li>
+<li><strong>y_label</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – y axis label</li>
+<li><strong>cor_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in df containing data series to cross
+correlate with data columns in data_col</li>
+<li><strong>colours</strong> (<em>Palette</em>) – Colour palette to use when plotting</li>
+<li><strong>lag_line_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Colour for the line indicating lag with max
+overlap</li>
+<li><strong>lag_line_alpha</strong> (<em>numeric</em>) – alpha (transparency) of the lag line</li>
+<li><strong>tb_loc</strong> (<em>sting</em>) – tool bar location</li>
+<li><strong>lag_line_dash</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Dash pattern for the line indicating lag with
+max overlap
+see: <a class="reference external" href="https://bokeh.pydata.org/en/latest/docs/user_guide/styling.html#line-properties">https://bokeh.pydata.org/en/latest/docs/user_guide/styling.html#line-properties</a></li>
+<li><strong>plot_x</strong> (<em>numeric</em>) – plot width in pixes on screen</li>
+<li><strong>plot_y</strong> (<em>numeric</em>) – plot height in pixes on screen</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Widget containing the plotted charts</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">(bokeh Tabs)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="data_vis.frange">
+<code class="descclassname">data_vis.</code><code class="descname">frange</code><span class="sig-paren">(</span><em>start</em>, <em>stop</em>, <em>step</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/data_vis.html#frange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#data_vis.frange" title="Permalink to this definition">¶</a></dt>
+<dd><p>generator that starts at a number, increase by an increment until the
+number it yields exceeds a limit</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>start</strong> (<em>numeric</em>) – The number we start at</li>
+<li><strong>stop</strong> (<em>numeric</em>) – Stop yeilding when we exceed this</li>
+<li><strong>step</strong> (<em>numeric</em>) – The increment</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="data_vis.get_pdf">
+<code class="descclassname">data_vis.</code><code class="descname">get_pdf</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/data_vis.html#get_pdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#data_vis.get_pdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the pdf of a data series</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data</strong> (<em>DataFrame</em>) – </td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The probablity density function
+kde.support (array): for plotting</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">pdf (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.6)">array</a>)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="data_vis.joint_plot">
+<code class="descclassname">data_vis.</code><code class="descname">joint_plot</code><span class="sig-paren">(</span><em>source_lst</em>, <em>x_feature</em>, <em>y_feature</em>, <em>x_label</em>, <em>y_label</em>, <em>plot_size=(800</em>, <em>600)</em>, <em>size_ratio=0.85</em>, <em>fit_line=True</em>, <em>logo=None</em>, <em>toolbar=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/data_vis.html#joint_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#data_vis.joint_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a scatter plot to be show with probablity density function plots in
+the joint_plot function</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source_list</strong> (<em>List</em>) – contains three ColumnDataSource object, the first
+two are for the x and y pdf chart respectively, the third is for
+the scatter plot.</li>
+<li><strong>x_feature</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – the feature in src to plot on the x axis</li>
+<li><strong>y_feature</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – the feature in src to plot on the y axis</li>
+<li><strong>x_label</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Label for the x axis</li>
+<li><strong>y_label</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Label for the y axis</li>
+<li><strong>plot_size</strong> (<em>List like</em>) – width and height of the plot</li>
+<li><strong>plot_ratio</strong> (<em>numeric</em>) – Relative size of scatter plot, larger the value
+the bigger the scatter plot relative to the pdf plots. Values
+between 0 - 1.</li>
+<li><strong>fit_line</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – Plot a linear least squares line of best fit</li>
+<li><strong>logo</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – Display the Bokeh logo or not</li>
+<li><strong>toolbar</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>Bokeh GridPlot object with the scatter and</dt>
+<dd><p class="first last">pdf plots within it.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#data_vis.joint_plot" title="data_vis.joint_plot">joint_plot</a> (Gridplot)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="data_vis.lag_gdp">
+<code class="descclassname">data_vis.</code><code class="descname">lag_gdp</code><span class="sig-paren">(</span><em>df, lag, year_col='year_label', gdp_cols=['GDP Growth', 'gdp'], area_cols=['area_name', 'area_level']</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/data_vis.html#lag_gdp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#data_vis.lag_gdp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lags the gdp data year</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>df</strong> (<em>DataFrame</em>) – Contains the gdp and traffic data</li>
+<li><strong>lag</strong> (<em>numeric</em>) – how many years to lag the gdp data</li>
+<li><strong>year_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Column in df containing the year</li>
+<li><strong>gdp_cols</strong> (<em>List</em>) – Columns in df containing gdp data</li>
+<li><strong>area_cols</strong> (<em>List</em>) – Columns in df contain geographic data</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>returns (DataFrame): contains data with traffic values matched to lagged</dt>
+<dd>gdp data</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="data_vis.lin_reg_line">
+<code class="descclassname">data_vis.</code><code class="descname">lin_reg_line</code><span class="sig-paren">(</span><em>source</em>, <em>x_feature</em>, <em>y_feature</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/data_vis.html#lin_reg_line"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#data_vis.lin_reg_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a linear regression line for plot_scatter</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>source</strong> (<em>ColumnDataSource</em>) – Contains the data to fit</li>
+<li><strong>x_feature</strong> – feature on the x axis (IV)</li>
+<li><strong>y_feature</strong> – feature on the y axis (DV)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>returns: line_src (ColumnDataSource) contains fit, the fitted line</dt>
+<dd>(predicted y values), +_err and -_err the + and - one standard error
+lines and x_vals, the x value for each fitted value in fit</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="data_vis.multiline_plot">
+<code class="descclassname">data_vis.</code><code class="descname">multiline_plot</code><span class="sig-paren">(</span><em>src, key_names, title, x_label, y_label, x_feature, data_cols=None, colours={3: ['#1f77b4', '#ff7f0e', '#2ca02c'], 4: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'], 5: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'], 6: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'], 7: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2'], 8: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f'], 9: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22'], 10: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']}, bold_col='red', bold_thick=1.5, bold_feature='gdp_growth', alpha=0.75, tb_loc='above', plot_width=1000, plot_height=750, leg_loc='bottom_right', font_size='8pt', messages=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/data_vis.html#multiline_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#data_vis.multiline_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a bokeh plot with multiple data series’ plotted as a line. One
+of these data series can be selected to be of a particular colour and
+thickness, useful for highlighting one particular data series. It is also
+possible to show/hide particular series by clicking on its entry in the
+legend</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>src</strong> (<em>ColumnDataSource</em>) – contains data to plot</li>
+<li><strong>data_cols</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – columns in src containing data to plot, if not
+passed, it plots all columns</li>
+<li><strong>title</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Title of the plot</li>
+<li><strong>x_label</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – x axis label</li>
+<li><strong>y_label</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – y axis label</li>
+<li><strong>x_feature</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column containing the year the data corrisponds to</li>
+<li><strong>data_cols</strong> – the columns containing data to plot</li>
+<li><strong>colours</strong> (<em>Palette</em>) – Colour palette to use when plotting</li>
+<li><strong>bold_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Colour for the highligted data series</li>
+<li><strong>bold_thick</strong> (<em>numeric</em>) – Line thickness for the highlighted data series</li>
+<li><strong>&quot;string&quot;</strong> (<em>bold_feature</em>) – name of the column in src containing data to
+highlight</li>
+<li><strong>alpha</strong> (<em>numeric</em>) – alpha (transparency) of the plotted lines</li>
+<li><strong>tb_loc</strong> (<em>sting</em>) – tool bar location
+see: <a class="reference external" href="https://bokeh.pydata.org/en/latest/docs/user_guide/tools.html">https://bokeh.pydata.org/en/latest/docs/user_guide/tools.html</a></li>
+<li><strong>plot_width</strong> (<em>numeric</em>) – plot size</li>
+<li><strong>plot_height</strong> (<em>numeric</em>) – plot size</li>
+<li><strong>leg_loc</strong> (<em>&quot;string&quot;</em>) – location of the legend
+see: <a class="reference external" href="https://bokeh.pydata.org/en/latest/docs/user_guide/styling.html#legends">https://bokeh.pydata.org/en/latest/docs/user_guide/styling.html#legends</a></li>
+<li><strong>font_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – size of font of the axis label text</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the figure created</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">plot (bokeh figure)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="data_vis.pdf_plot">
+<code class="descclassname">data_vis.</code><code class="descname">pdf_plot</code><span class="sig-paren">(</span><em>src</em>, <em>feature</em>, <em>plot=None</em>, <em>x_suffix='_support'</em>, <em>y_suffix='_density'</em>, <em>plot_size=(600</em>, <em>150)</em>, <em>axis_swap=False</em>, <em>logo=None</em>, <em>toolbar=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/data_vis.html#pdf_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#data_vis.pdf_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a probablity density plot to be show with a scatter plot in
+the joint_plot function</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>src</strong> (<em>ColumnDataSource</em>) – we create the plot from the data here</li>
+<li><strong>feature</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – the feature in src to plot</li>
+<li><strong>plot</strong> (<em>Figure</em>) – bokeh figure to create the plot with, will create
+our own if this is None.</li>
+<li><strong>x_suffix</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – suffix to append to feature to indicate the column
+in src of the values to plot on the x axis</li>
+<li><strong>x_suffix</strong> – suffix to append to feature to indicate the column
+in src of the values to plot on the x axis</li>
+<li><strong>plot_size</strong> (<em>List like</em>) – width and height of the plot</li>
+<li><strong>axis_swap</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – When set to True, swap the axes, so x becomes y
+and y becomes x</li>
+<li><strong>logo</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – Display the Bokeh logo or not</li>
+<li><strong>toolbar</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>Bokeh Figure of the pdf for the feature indicated by</dt>
+<dd><p class="first last">feature in the source data, src</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">plot (Figure)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="data_vis.plot_scatter">
+<code class="descclassname">data_vis.</code><code class="descname">plot_scatter</code><span class="sig-paren">(</span><em>src</em>, <em>x_feature</em>, <em>y_feature</em>, <em>x_label</em>, <em>y_label</em>, <em>plot=None</em>, <em>plot_size=(600</em>, <em>450)</em>, <em>fit_line=False</em>, <em>fit_line_col='black'</em>, <em>logo=None</em>, <em>toolbar=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/data_vis.html#plot_scatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#data_vis.plot_scatter" title="Permalink to this definition">¶</a></dt>
+<dd><p>scatter_plot</p>
+<p>Creates a scatter plot to be show with probablity density function plots in
+the joint_plot function</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>src</strong> (<em>ColumnDataSource</em>) – we create the plot from the data here</li>
+<li><strong>y_feature</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – the feature in src to plot on the x axis</li>
+<li><strong>y_feature</strong> – the feature in src to plot on the y axis</li>
+<li><strong>x_label</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Label for the x axis</li>
+<li><strong>y_label</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Label for the y axis</li>
+<li><strong>plot</strong> (<em>Figure</em>) – bokeh figure to create the plot with, will create
+our own if this is None.</li>
+<li><strong>plot_size</strong> (<em>List like</em>) – width and height of the plot</li>
+<li><strong>fit_line</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – Plot a linear least squares line of best fit</li>
+<li><strong>fit_line_col</strong> – (string): colour of the line of best fit,</li>
+<li><strong>logo</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – Display the Bokeh logo or not</li>
+<li><strong>toolbar</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>Bokeh Figure showing a scatter plot for two features</dt>
+<dd><p class="first last">in the source data, src</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">plot (Figure)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Edward Rowland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/data_vis.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

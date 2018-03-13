@@ -1,0 +1,646 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dataset_processing module &#8212; traffic_gdp_report 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-dataset_processing">
+<span id="dataset-processing-module"></span><h1>dataset_processing module<a class="headerlink" href="#module-dataset_processing" title="Permalink to this headline">¶</a></h1>
+<p>Created on Tue Aug  8 11:13:20 2017</p>
+<p>&#64;author: Edward Rowland</p>
+<p>A module containing functions for processing data for the
+GDP_nowcasting project</p>
+<dl class="docutils">
+<dt>Functions:</dt>
+<dd><p class="first">The module contains the following functions</p>
+<ul class="last simple">
+<li>traffic_munguning</li>
+<li>load_traffic_data</li>
+<li>merge_regions</li>
+<li>merge_nuts_regions</li>
+</ul>
+</dd>
+</dl>
+<dl class="function">
+<dt id="dataset_processing.drop_duplicate_rows">
+<code class="descclassname">dataset_processing.</code><code class="descname">drop_duplicate_rows</code><span class="sig-paren">(</span><em>df</em>, <em>col_to_del='Unnamed'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#drop_duplicate_rows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.drop_duplicate_rows" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sometimes in data munging the rows get repeated with some extra
+unwanted columns with names like “Unnamed: 1”. This solves that issue</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>DataFrame</em>) – dataframe with the repeating rows</li>
+<li><strong>col_to_del</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – name of column or word in column names we need
+to get rid of</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>dataframe without repeating rows in fixed, incremental</dt>
+<dd><p class="first last">index</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">df (Dataframe)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.files_looks_like">
+<code class="descclassname">dataset_processing.</code><code class="descname">files_looks_like</code><span class="sig-paren">(</span><em>loc</em>, <em>looks_like='.*traffic[0-9]'</em>, <em>ext='csv'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#files_looks_like"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.files_looks_like" title="Permalink to this definition">¶</a></dt>
+<dd><p>file_looks_like
+returns files in a folder of a specified extenstion that has a filename
+like a partiular reg expression</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – path of the folder where the files are stored</li>
+<li><strong>looks_like</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – regex to match the filename with</li>
+<li><strong>ext</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – extention of the files to match e.g csv</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the files that match the regex with the extension.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">matches (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)">list</a>)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.get_growth">
+<code class="descclassname">dataset_processing.</code><code class="descname">get_growth</code><span class="sig-paren">(</span><em>df</em>, <em>area_col</em>, <em>gdp_col</em>, <em>messages=False</em>, <em>time_col='time'</em>, <em>ratio_col='gdp_ratio'</em>, <em>growth_col='growth'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#get_growth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.get_growth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates gdp growth for this year’s figure based on the previous year.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>Dataframe</em>) – GDP data by nuts region.</li>
+<li><strong>area_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in df where the nuts area name is stored</li>
+<li><strong>gdp_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Column in df where the gdp value is stored</li>
+<li><strong>messages</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – Print out messages?</li>
+<li><strong>time_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Column in df giving the year of the gdp figure.</li>
+<li><strong>ratio_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Column in df  to store the gdp ratio from the
+previous year.</li>
+<li><strong>growth_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Column in df to store the gdp growth from the
+previous year.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>As passed, except with two new columns named as string</dt>
+<dd><p class="first last">in ratio_col and growth col with gdp ratio and gdp growth for that
+region based on last year</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">df (DataFrame)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.get_map">
+<code class="descclassname">dataset_processing.</code><code class="descname">get_map</code><span class="sig-paren">(</span><em>maps_df, countries_col='countries', country_dict={'uk': ['united_kingdom'], 'sco': ['scotland'], 'eng_wal': ['england_wales']}, shapefile_col='shapefiles', filename_col='filename', nuts_col='nuts_level', year_col='year'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#get_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.get_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.load_all_traffic_data">
+<code class="descclassname">dataset_processing.</code><code class="descname">load_all_traffic_data</code><span class="sig-paren">(</span><em>loc, load_columns=['road', 'rcat'], regex='.*traffic_gdp_[0-9]', ext='csv'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#load_all_traffic_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.load_all_traffic_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.load_gdp">
+<code class="descclassname">dataset_processing.</code><code class="descname">load_gdp</code><span class="sig-paren">(</span><em>file</em>, <em>area</em>, <em>loc='/data/GDP/'</em>, <em>geo_col='geo'</em>, <em>time_col='time'</em>, <em>format_cols=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#load_gdp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.load_gdp" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads and does a bit of cleaning of gsp_data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – location of the file to be loaded.</li>
+<li><strong>file</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – name of the file to be loaded.</li>
+<li><strong>area</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – NUTS level the dataset is set at</li>
+<li><strong>geo_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in file containing geograpical area name</li>
+<li><strong>time_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column containing data on the time the data refers
+to</li>
+<li><strong>format_cols</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – indicates if we need to format the column names</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">gdp data for nuts regions</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">gdp_df (dataframe)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.load_shapefile">
+<code class="descclassname">dataset_processing.</code><code class="descname">load_shapefile</code><span class="sig-paren">(</span><em>shp_lookup</em>, <em>shp_col</em>, <em>nuts_dir='/data/geographic/shapefiles/NUTS/'</em>, <em>year=2015</em>, <em>year_col='years'</em>, <em>logger=&lt;logging.Logger object&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#load_shapefile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.load_shapefile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a shapefile with name stored in a dataframe column for a particular
+year, also in a column within a directory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>shp_lookup</strong> (<em>dataframe</em>) – contains the names of shapefiles by year</li>
+<li><strong>shp_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – name of the column containing the name of the datafile</li>
+<li><strong>nuts_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – directory where the shapefile is kept</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>contains the shapefile, is empty if no shapefile</dt>
+<dd><p class="first last">is found</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">shp (GeoDataFrame)</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">OSError : will return shp as an empty GeoDataFrame
+TypeError: as OSError</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.load_stats">
+<code class="descclassname">dataset_processing.</code><code class="descname">load_stats</code><span class="sig-paren">(</span><em>loc='/home/eddr/Documents/Projects/report/docs/working/data/'</em>, <em>name='traffic_stats.csv'</em>, <em>year_col='year'</em>, <em>year_label_col='year_label'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#load_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.load_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads the .csv file with descriptive statistics by nuts region
+and nationally</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – path to where the file is stored</li>
+<li><strong>file</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – name of the file</li>
+<li><strong>year_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in df that contains year the data was
+collected</li>
+<li><strong>year_label_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – integer, useful for plotting.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Contains the descriptive statistics</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">df (Dataframe)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.load_traffic_data">
+<code class="descclassname">dataset_processing.</code><code class="descname">load_traffic_data</code><span class="sig-paren">(</span><em>proj_dir='/home/eddr/Documents/Projects/GDP_nowcasting', traffic_loc='/data/traffic/', major_roads='AADF-data-major-roads.csv', minor_roads='AADF-data-minor-roads.csv', year=2015, key=['major', 'minor'], e_n_col='east_north', e_col='s ref e', n_col='s ref n', lat_long_col='lat_long', lat_col='s ref latitude', long_col='s ref longitude'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#load_traffic_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.load_traffic_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>function that loads the aadf data from the dft and sticks it all together.
+calls traffic_munging</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>proj_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – directory of the project</li>
+<li><strong>traffic_loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – folder with the traffic data</li>
+<li><strong>major_roads</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – name of the major roads aadf data file</li>
+<li><strong>minor_roads</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – name of the minor roads aadf data file</li>
+<li><strong>year</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – year of the data we want</li>
+<li><strong>key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – a list of length 2 with a reference to the two data files</li>
+<li><strong>e_n_ocl</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – name of the column in traffic_df that will contain
+the easting and northing geospatail point data</li>
+<li><strong>e_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – column in traffic_df containing the easting co-ord</li>
+<li><strong>n_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – column in traffic_df containing the northing co-ord</li>
+<li><strong>lat_long_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – name of the column in traffic_df that will contain
+the latitude and longitude geospatial point data</li>
+<li><strong>lat_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – column in traffic_df containing the latitude co-ord</li>
+<li><strong>long_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – column in traffic_df containing the longitude co-ord</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>contains traffic data from both the major and</dt>
+<dd><p class="first last">minor roads datasets, processed from the year
+specified.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">traffic_df (dataframe)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.merge_all_traffic_gdp">
+<code class="descclassname">dataset_processing.</code><code class="descname">merge_all_traffic_gdp</code><span class="sig-paren">(</span><em>nuts2_gdp_df</em>, <em>nuts3_gdp_df</em>, <em>nat_gdp_df</em>, <em>traffic_loc</em>, <em>file_loc='/working/data/'</em>, <em>traffic_year_col='aadfyear'</em>, <em>traffic_nuts2_col='nuts2_name'</em>, <em>traffic_nuts3_col='nuts3_name'</em>, <em>gdp_year_col='time'</em>, <em>nat_year_col='year'</em>, <em>gdp_nuts2_col='nuts2'</em>, <em>gdp_nuts3_col='nuts3'</em>, <em>gdp_nuts2_val_col='nuts2_value'</em>, <em>gdp_nuts3_val_col='nuts3_value'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#merge_all_traffic_gdp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.merge_all_traffic_gdp" title="Permalink to this definition">¶</a></dt>
+<dd><p>merges all traffic data files in the given folder, that have been labelled
+with the correct nuts regions, with the gdp for those regions</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>nuts2_gdp_df</strong> (<em>DataFrame</em>) – nuts2 regions gdp data</li>
+<li><strong>nuts3_gdp_df</strong> (<em>DataFrame</em>) – nuts2 regions gdp data</li>
+<li><strong>national_gdp_df</strong> (<em>DataFrame</em>) – national gdp data</li>
+<li><strong>traffic_loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – folder path for where all the traffic data is
+stored</li>
+<li><strong>traffic_year_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in traffic_df that indicates what
+year the data corresponds to</li>
+<li><strong>traffic_nuts2_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column indicating nut2 region observation
+is in, in traffic_df</li>
+<li><strong>traffic_nuts3_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column indicating nut3 region observation
+is in, in traffic_df</li>
+<li><strong>gdp_year_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in nuts2_gdp_df and nuts3_gdp_df where
+year is stored</li>
+<li><strong>nat_year_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in nat_gdp_df that indicates what
+year the data corresponds to</li>
+<li><strong>gdp_nuts2_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column for nuts2 region in nuts2_gdp_df</li>
+<li><strong>gdp_nuts3_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column for nuts3 region in nuts3_gdp_df</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.merge_nuts_regions">
+<code class="descclassname">dataset_processing.</code><code class="descname">merge_nuts_regions</code><span class="sig-paren">(</span><em>df</em>, <em>df_suffix='traffic'</em>, <em>proj_dir='/home/eddr/Documents/Projects/GDP_nowcasting'</em>, <em>shape_loc='/data/geographic/shapefiles/'</em>, <em>nuts2_loc='nuts2_2018/'</em>, <em>nuts3_loc='nuts3_2018/'</em>, <em>nuts2_file='NUTS_Level_2_January_2018_Full_Clipped_Boundaries_in_the_United_Kingdom.shp'</em>, <em>nuts3_file='NUTS_Level_3_January_2018_Full_Extent_Boundaries_in_the_United_Kingdom.shp'</em>, <em>geo_col='east_north'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#merge_nuts_regions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.merge_nuts_regions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basically a wrapper for merge_regions that loads in the nuts shapefiles</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>dataframe</em>) – containing data (e.g from load_traffic_data) to merge</li>
+<li><strong>df_suffix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – to add to the column names that were originally in df</li>
+<li><strong>shape_loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – directory of the shapefiles</li>
+<li><strong>nuts2_loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – folder for the nuts2 shapefile</li>
+<li><strong>nuts3_loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – folder for the nuts3 shapefile</li>
+<li><strong>nuts2_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – nuts2 shapefile name</li>
+<li><strong>nuts3_file</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – nuts3 shapefile name</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>made up of df merged with nuts2</dt>
+<dd><p class="first last">and nuts3 shapefiles data</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">merge_regions output (geodataframe)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.merge_regions">
+<code class="descclassname">dataset_processing.</code><code class="descname">merge_regions</code><span class="sig-paren">(</span><em>df</em>, <em>nuts2_shp</em>, <em>nuts3_shp</em>, <em>geo_col='east_north'</em>, <em>df_suffix='traffic'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#merge_regions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.merge_regions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function that merges a pandas dataframe containing geospatail points
+with the descriptive data (e.g region name) from the nuts2 and nuts3
+shapefiles.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>dataframe</em>) – containing data (e.g from load_traffic_data) to merge</li>
+<li><strong>nuts2_shp</strong> (<em>geodataframe</em>) – nuts2 region shapefile</li>
+<li><strong>nuts3_shp</strong> (<em>geodataframe</em>) – nuts3 region shapefile</li>
+<li><strong>geo_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – column name in df that contains the spatial point data</li>
+<li><strong>df_suffix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – to add to columnnames in df in returned geodataframe</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>made up of df merged with nuts2 and nuts3</dt>
+<dd><p class="first last">shapefiles data</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">gdf (geodataframe)</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Warnings:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.merge_traffic_with_gdp">
+<code class="descclassname">dataset_processing.</code><code class="descname">merge_traffic_with_gdp</code><span class="sig-paren">(</span><em>traffic_df</em>, <em>nuts2_gdp_df</em>, <em>nuts3_gdp_df</em>, <em>nat_gdp_df</em>, <em>file_loc='/working/data/'</em>, <em>traffic_year_col='aadfyear'</em>, <em>traffic_nuts2_col='nuts2_name'</em>, <em>traffic_nuts3_col='nuts3_name'</em>, <em>gdp_year_col='time'</em>, <em>nat_year_col='year'</em>, <em>gdp_nuts2_col='nuts2'</em>, <em>gdp_nuts3_col='nuts3'</em>, <em>gdp_nuts2_val_col='nuts2_value'</em>, <em>gdp_nuts3_val_col='nuts3_value'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#merge_traffic_with_gdp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.merge_traffic_with_gdp" title="Permalink to this definition">¶</a></dt>
+<dd><p>merges traffic data that has been labelled with the correct data nuts
+regions with the gdp for those regions</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>traffic_df</strong> (<em>DataFrame</em>) – contains the traffic data</li>
+<li><strong>nuts2_gdp_df</strong> (<em>DataFrame</em>) – nuts2 regions gdp data</li>
+<li><strong>nuts3_gdp_df</strong> (<em>DataFrame</em>) – nuts2 regions gdp data</li>
+<li><strong>national_gdp_df</strong> (<em>DataFrame</em>) – national gdp data</li>
+<li><strong>traffic_year_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in traffic_df that indicates what
+year the data corresponds to</li>
+<li><strong>nat_year_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in nat_gdp_df that indicates what
+year the data corresponds to</li>
+<li><strong>traffic_nuts2_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column indicating nut2 region observation
+is in, in traffic_df</li>
+<li><strong>traffic_nuts3_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column indicating nut3 region observation
+is in, in traffic_df</li>
+<li><strong>gdp_year_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in nuts2_gdp_df and nuts3_gdp_df where
+year is stored</li>
+<li><strong>gdp_nuts2_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column for nuts2 region in nuts2_gdp_df</li>
+<li><strong>gdp_nuts3_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column for nuts3 region in nuts3_gdp_df</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.merge_traffic_with_nuts">
+<code class="descclassname">dataset_processing.</code><code class="descname">merge_traffic_with_nuts</code><span class="sig-paren">(</span><em>shapefile_lookup, proj_dir='/home/eddr/Documents/Projects/GDP_nowcasting', traffic_loc='/data/traffic/', working_dir='/working/data/', major_roads='AADF-data-major-roads.csv', minor_roads='AADF-data-minor-roads.csv', columns=['nuts2_ew', 'nuts2_sco', 'nuts3_ew', 'nuts3_sco'], nuts_levels=['nuts2', 'nuts3'], df_suffix='traffic', geo_col='east_north', lookup_years_col='years', e_col='s ref e', n_col='s ref n', lat_long_col='lat_long', lat_col='s ref latitude', long_col='s ref longitude', crs_df=0, logger=&lt;logging.Logger object&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#merge_traffic_with_nuts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.merge_traffic_with_nuts" title="Permalink to this definition">¶</a></dt>
+<dd><p>This takes the files for each year with aadf traffic dataset and then finds
+the NUTS regions that the observation point sits in, then merges the
+details of the NUTS region with that observation using a spatial join.
+Outputs the resulting merged df as a .csv in the working directory</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>shapefile_lookup</strong> (<em>Dataframe</em>) – contains the names of the shapefiles
+to merge onto the traffic data</li>
+<li><strong>proj_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – the project directory where the folder containing
+traffic is stored</li>
+<li><strong>traffic_loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – folder within proj_dir where the traffic data is</li>
+<li><strong>working_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – folder where the working data files are stored</li>
+<li><strong>major_roads</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – name of the file containing aadf observations for
+major roads</li>
+<li><strong>minor_roads</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – name of the file containing aadf observations for
+minor roads</li>
+<li><strong>columns</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – columns in shape_lookup that contain shapefile names</li>
+<li><strong>nuts_levels</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – names of the different NUTS levels</li>
+<li><strong>df_suffix</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – to append to column names from the traffic data
+after the merge</li>
+<li><strong>geo_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in traffic data to put the spatial point
+easobject created from easting and northing co-ords</li>
+<li><strong>e_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column that contains the easting co-ord in traffic data</li>
+<li><strong>n_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column that contains the northing co-ord in traffic
+data</li>
+<li><strong>lat_long_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – longitude spatial point bject created from co-ords</li>
+<li><strong>lat_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column that contains the latitude co-ord in traffic
+data</li>
+<li><strong>long_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column that contains the longitude co-ord in traffic
+data</li>
+<li><strong>crs_df</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – location of the crs data to copy from the shapefile over
+to the merged traffic/nuts merged geodataframe,</li>
+<li><strong>logger</strong> (<em>logging.logger</em>) – logger for logging warnings, errors etc.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<dl class="last docutils">
+<dt>IOError <span class="classifier-delimiter">:</span> <span class="classifier">if the merged dataframe cannot be created and saved into</span></dt>
+<dd>a csv file</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.mung_shapefiles">
+<code class="descclassname">dataset_processing.</code><code class="descname">mung_shapefiles</code><span class="sig-paren">(</span><em>gdf, column_replace={'shape_length': ['SHAPE_Leng', 'st_lengths'], 'nuts_code': ['nuts218cd', 'nuts215cd', 'nuts318cd', 'nuts315cd', 'eurostat_n'], 'shape_area': ['st_areasha'], 'nuts3_name': ['nuts318nm', 'nuts315nm'], 'nuts2_name': ['nuts218nm', 'nuts215nm']}</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#mung_shapefiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.mung_shapefiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>processing the shapefiles so they merge/append etc. better by homogenising
+column names</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>gdf</strong> (<em>geodataframe</em>) – data loaded from a shapefile</li>
+<li><strong>column_replace</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.6)"><em>dict</em></a>) – key/value pairs where the value is a list of</li>
+<li><strong>that if they are a name of a column in gdf are replaced by</strong> (<em>strings</em>) – </li>
+<li><strong>key</strong> (<em>the</em>) – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">shapefile data with homogenised column names</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">gdf (geodataframe)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.string_to_num">
+<code class="descclassname">dataset_processing.</code><code class="descname">string_to_num</code><span class="sig-paren">(</span><em>df</em>, <em>cols</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#string_to_num"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.string_to_num" title="Permalink to this definition">¶</a></dt>
+<dd><p>string_to_num - GDP and traffic flow correlations over time</p>
+<p>converts all values in a column from string to numerical values</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>DataFrame</em>) – data to convert to string</li>
+<li><strong>cols</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – list of columns in df for conversion</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">now with specified columns as a string</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">df (DataFrame)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.traffic_munging">
+<code class="descclassname">dataset_processing.</code><code class="descname">traffic_munging</code><span class="sig-paren">(</span><em>df</em>, <em>val_str='fd'</em>, <em>val_name='aadf'</em>, <em>melt=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#traffic_munging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.traffic_munging" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data muning for the traffic data, converts column names to lower case
+set id and value columns of the dataframe and melts the dataframe to tall
+data format</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>dataframe</em>) – the traffic data</li>
+<li><strong>val_str</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – this is the column in df that contains values for
+traffic flow</li>
+<li><strong>val_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – the name to give the traffic flow values column in
+the melted dataset</li>
+<li><strong>melt</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – indicate whether or not to melt the dataset</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">the processesd traffic data</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">df (dataframe)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="dataset_processing.unmelt_by_col">
+<code class="descclassname">dataset_processing.</code><code class="descname">unmelt_by_col</code><span class="sig-paren">(</span><em>df</em>, <em>key_col</em>, <em>value_cols</em>, <em>validation='one_to_one'</em>, <em>messages=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/dataset_processing.html#unmelt_by_col"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#dataset_processing.unmelt_by_col" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a dataframe in tall format with a key column and multiple value
+columns and turns it into wide format.
+All other columns not in key_col or value_col are assumed to be index
+columns</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>DataFrame</em>) – data in tall format</li>
+<li><strong>key_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – </li>
+<li><strong>value_cols</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – columns in df that contain the values</li>
+<li><strong>validation</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – validation to perfom on the unmelted data; check
+pandas documentation for mergeing for details or set this as None
+to avoid.</li>
+<li><strong>messages</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – print messages, useful for debugging</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">df in wide format</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">unmelted_df (DataFrame)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Edward Rowland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/dataset_processing.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

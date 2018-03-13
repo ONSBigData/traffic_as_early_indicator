@@ -1,0 +1,358 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>exploratory_analysis module &#8212; traffic_gdp_report 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-exploratory_analysis">
+<span id="exploratory-analysis-module"></span><h1>exploratory_analysis module<a class="headerlink" href="#module-exploratory_analysis" title="Permalink to this headline">¶</a></h1>
+<p>Created on Mon Nov 27 11:48:26 2017</p>
+<p>&#64;author: Edward Rowland</p>
+<dl class="function">
+<dt id="exploratory_analysis.all_descriptive_stats">
+<code class="descclassname">exploratory_analysis.</code><code class="descname">all_descriptive_stats</code><span class="sig-paren">(</span><em>loc</em>, <em>stats_for</em>, <em>file_year_col='aadfyear'</em>, <em>file_regex='.*traffic_gdp_[0-9]'</em>, <em>ext='csv'</em>, <em>messages=False</em>, <em>rcat_col='rcat'</em>, <em>nuts2_col='nuts2_name'</em>, <em>nuts3_col='nuts3_name'</em>, <em>area_col_suffix='_name'</em>, <em>veh_col='vehicle_measure'</em>, <em>area_name_col='area_name'</em>, <em>area_level_col='area_level'</em>, <em>year_col='year'</em>, <em>gdp_col='gdp'</em>, <em>gdp_unit_col='gdp_unit'</em>, <em>road_all_indicator='all'</em>, <em>test_range=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/exploratory_analysis.html#all_descriptive_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exploratory_analysis.all_descriptive_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>compute_descriptive_stats</p>
+<p>Computes descriptive stats with pandas describe function for NUTS2 &amp; 3
+areas to compare against that area’s gdp.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>loc</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – folder location with the datafiles inside</li>
+<li><strong>file_regex</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – regex expression to select the files to load</li>
+<li><strong>ext</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – extension of the files to load</li>
+<li><strong>messages</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – indicate to print progress messages</li>
+<li><strong>stats_for</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – List of columns that we want to aggreagate.</li>
+<li><strong>file_year_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column in file where the year of the
+observations are stored.</li>
+<li><strong>rcat_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Column in df that stores the road category.</li>
+<li><strong>nuts2_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Column in df that stores the nuts2 category.</li>
+<li><strong>nuts3_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Column in df that stores the nuts3 category.</li>
+<li><strong>area_col_suffix</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Suffix to add to the nuts level that gives
+the column in df that stores the area name.</li>
+<li><strong>veh_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the traffic
+flow measure is stored</li>
+<li><strong>area_name_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the
+area name is stored.</li>
+<li><strong>area_level_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the
+nuts level is stored.</li>
+<li><strong>year_level_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the
+year is stored.</li>
+<li><strong>gdp_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the
+gdp value is stored.</li>
+<li><strong>gdp_unit_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the
+gdp unit is stored.</li>
+<li><strong>road_all_indicator</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Value in rcat_col in describe_df that
+corrisponds to stats for all road categories</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Contains descriptive stats by road type
+and NUTS area for observations in df</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">describe_df (DataFrame)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="exploratory_analysis.compute_PCs">
+<code class="descclassname">exploratory_analysis.</code><code class="descname">compute_PCs</code><span class="sig-paren">(</span><em>df</em>, <em>features</em>, <em>strat='median'</em>, <em>n_comp=4</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/exploratory_analysis.html#compute_PCs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exploratory_analysis.compute_PCs" title="Permalink to this definition">¶</a></dt>
+<dd><p>standardises and imputes data then computes principle components</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>df</strong> (<em>DataFrame</em>) – the data to find the PCs of</li>
+<li><strong>features</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – columns in df with the independent variables</li>
+<li><strong>strategy</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – imputation strategy</li>
+<li><strong>n_comp</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – number of principle components</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="exploratory_analysis.compute_descriptive_stats">
+<code class="descclassname">exploratory_analysis.</code><code class="descname">compute_descriptive_stats</code><span class="sig-paren">(</span><em>df</em>, <em>year</em>, <em>stats_for</em>, <em>rcat_col='rcat'</em>, <em>nuts2_col='nuts2_name'</em>, <em>nuts3_col='nuts3_name'</em>, <em>area_col_suffix='_name'</em>, <em>growth_col_suffix='_growth'</em>, <em>ratio_col_suffix='_gdp_ratio'</em>, <em>veh_col='vehicle_measure'</em>, <em>area_name_col='area_name'</em>, <em>area_level_col='area_level'</em>, <em>year_col='year'</em>, <em>gdp_col='gdp'</em>, <em>gdp_unit_col='gdp_unit'</em>, <em>growth_col='gdp_growth'</em>, <em>ratio_col='gdp_ratio'</em>, <em>road_all_indicator='all'</em>, <em>national='nat'</em>, <em>nat_level='nuts1'</em>, <em>nat_gdp_col='gdp'</em>, <em>nat_gdp_unit_col='gdp_unit'</em>, <em>nat_gdp_growth_col='gdp_growth'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/exploratory_analysis.html#compute_descriptive_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exploratory_analysis.compute_descriptive_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes descriptive stats with pandas describe function for NUTS2 &amp; 3
+areas to compare against that area’s gdp.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>DataFrame</em>) – Contains the traffic data by observation point that
+we wish to aggregate</li>
+<li><strong>year</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Year the df corresponds to.</li>
+<li><strong>stats_for</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – List of columns that we want to aggreagate.</li>
+<li><strong>rcat_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Column in df that stores the road category.</li>
+<li><strong>nuts2_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Column in df that stores the nuts2 category.</li>
+<li><strong>nuts3_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Column in df that stores the nuts3 category.</li>
+<li><strong>area_col_suffix</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Suffix to add to the nuts level that gives
+the column in df that stores the area name.</li>
+<li><strong>growth_col_suffix</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Suffix to add to the nuts level that gives
+the column in df that stores the gdp growth.</li>
+<li><strong>ratio_col_suffix</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Suffix to add to the nuts level that gives
+the column in df that stores the gdp ratio on previous year.</li>
+<li><strong>veh_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the traffic
+flow measure is stored</li>
+<li><strong>area_name_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the
+area name is stored.</li>
+<li><strong>area_level_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the
+nuts level is stored.</li>
+<li><strong>year_level_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the
+year is stored.</li>
+<li><strong>gdp_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the
+gdp value is stored.</li>
+<li><strong>gdp_unit_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the
+gdp unit is stored.</li>
+<li><strong>growth_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the
+gdp growth value is stored.</li>
+<li><strong>ratio_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Name of the column in describe_df where the
+gdp ratio on previous year value is stored.</li>
+<li><strong>road_all_indicator</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – Value in rcat_col in describe_df that
+corrisponds to stats for all road categories,</li>
+<li><strong>national</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – label to go in df[area_col] indicating this is
+stats for the nation</li>
+<li><strong>nat_level</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – label to go in df[area_level_col] indicating this
+is stats for the nation</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Contains descriptive stats by road type
+and NUTS area for observations in df</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">describe_df (DataFrame)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="exploratory_analysis.create_grid_scatter">
+<code class="descclassname">exploratory_analysis.</code><code class="descname">create_grid_scatter</code><span class="sig-paren">(</span><em>df</em>, <em>group_col</em>, <em>bg_colour='#efe8e2'</em>, <em>alpha_level=0.1</em>, <em>point_size=1</em>, <em>sample_ratio=0.1</em>, <em>messages=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/exploratory_analysis.html#create_grid_scatter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exploratory_analysis.create_grid_scatter" title="Permalink to this definition">¶</a></dt>
+<dd><p>builds a grid of scatterplots, useful for checking multicolinearity.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>df</strong> (<em>DataFrame</em>) – </li>
+<li><strong>group_col</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – to colour the points by group</li>
+<li><strong>bg_colour</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – colour hex code of the background</li>
+<li><strong>alpha_level</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.6)"><em>float</em></a>) – tranparency of plots</li>
+<li><strong>point_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.6)"><em>float</em></a>) – size of points on plot</li>
+<li><strong>sample_ratio</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.6)"><em>float</em></a>) – ratio of observations in df to use for speed and
+to prevent overplotting</li>
+<li><strong>messages</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – print messages</li>
+<li><strong>Returns</strong> – fig (holoviews plot): the grid scatter</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="exploratory_analysis.feature_hist">
+<code class="descclassname">exploratory_analysis.</code><code class="descname">feature_hist</code><span class="sig-paren">(</span><em>df</em>, <em>features</em>, <em>messages=False</em>, <em>sample_ratio=0.1</em>, <em>kde_colour='r'</em>, <em>kde_line_width=3</em>, <em>hist_colour='b'</em>, <em>hist_line_width=3</em>, <em>hist_alpha=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/exploratory_analysis.html#feature_hist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exploratory_analysis.feature_hist" title="Permalink to this definition">¶</a></dt>
+<dd><p>plots a histogram with kernel density estimation for each feature in a df</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>DataFrame</em>) – the data to plot</li>
+<li><strong>features</strong> (<em>DataFrame</em>) – columns in df containing data to plot</li>
+<li><strong>messages</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – set to true to print out progress messages</li>
+<li><strong>sample_ratio</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.6)"><em>float</em></a>) – the fraction of observations in df to plot
+to reduce overplotting and speed up runtime</li>
+<li><strong>kde_colour</strong> (<em>char</em>) – matplotlib colour for kde plot</li>
+<li><strong>kde_line_width</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.6)"><em>float</em></a>) – kde plot line width</li>
+<li><strong>hist_colour</strong> (<em>char</em>) – matplotlib colour for histogram plot</li>
+<li><strong>hist_line_width</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.6)"><em>float</em></a>) – hist plot line width</li>
+<li><strong>hist_alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.6)"><em>float</em></a>) – transparency setting for histogram</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">list of matplotlib plots for each feature</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">plots_lst (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)">list</a>)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="exploratory_analysis.linearity_plots">
+<code class="descclassname">exploratory_analysis.</code><code class="descname">linearity_plots</code><span class="sig-paren">(</span><em>df</em>, <em>features</em>, <em>nuts_val</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/exploratory_analysis.html#linearity_plots"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exploratory_analysis.linearity_plots" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates plots to check for non-linearities in features vs the DV.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> (<em>DataFrame</em>) – contains data to plot</li>
+<li><strong>features</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – column names of the IVs to check against the DV</li>
+<li><strong>nuts_val</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – column name of the DV</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
+<dt>list of seaborne (matplotlib) plot objects for</dt>
+<dd><p class="first last">the plot of each IV vs DV</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">fig_lst (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)">list</a>)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="exploratory_analysis.loadings_plot">
+<code class="descclassname">exploratory_analysis.</code><code class="descname">loadings_plot</code><span class="sig-paren">(</span><em>PCA_data</em>, <em>coeff</em>, <em>labels=None</em>, <em>x_comp=0</em>, <em>y_comp=1</em>, <em>alpha_level=0.5</em>, <em>arrow_colour='r'</em>, <em>text_colour='g'</em>, <em>dots_per_inch=500</em>, <em>size=1</em>, <em>text_size='small'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/exploratory_analysis.html#loadings_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exploratory_analysis.loadings_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a loadings plot to show the influence of each feature on a component</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>PCA_data</strong> – </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="exploratory_analysis.plot_pearsons">
+<code class="descclassname">exploratory_analysis.</code><code class="descname">plot_pearsons</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/exploratory_analysis.html#plot_pearsons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exploratory_analysis.plot_pearsons" title="Permalink to this definition">¶</a></dt>
+<dd><p>compute persons correlation coefficents and plot in heatmap</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>df</strong> (<em>DataFrame</em>) – numerical values to plot</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">array of correlation coefficients
+fig (matplotlib axes): heatmap of correlations</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">corr_arr (<a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.6)">array</a>)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="exploratory_analysis.qq_plot">
+<code class="descclassname">exploratory_analysis.</code><code class="descname">qq_plot</code><span class="sig-paren">(</span><em>df</em>, <em>features</em>, <em>distribution='norm'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/exploratory_analysis.html#qq_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exploratory_analysis.qq_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>qq plots for each column in features stored in df</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>df</strong> (<em>dataframe</em>) – contains data to be plotted</li>
+<li><strong>features</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.6)"><em>list</em></a>) – names of columns in df to plot</li>
+<li><strong>distribution</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.6)"><em>string</em></a>) – </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Edward Rowland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/exploratory_analysis.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

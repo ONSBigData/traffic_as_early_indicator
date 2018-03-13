@@ -1,0 +1,1088 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dataset_processing &#8212; traffic_gdp_report 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dataset_processing</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Tue Aug  8 11:13:20 2017</span>
+
+<span class="sd">@author: Edward Rowland</span>
+
+<span class="sd">A module containing functions for processing data for the</span>
+<span class="sd">GDP_nowcasting project</span>
+
+<span class="sd">Functions:</span>
+<span class="sd">    The module contains the following functions</span>
+<span class="sd">    </span>
+<span class="sd">    - traffic_munguning</span>
+<span class="sd">    - load_traffic_data</span>
+<span class="sd">    - merge_regions</span>
+<span class="sd">    - merge_nuts_regions</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1">#%%</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">gc</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+<span class="kn">import</span> <span class="nn">shapely</span> <span class="k">as</span> <span class="nn">sh</span>
+<span class="kn">import</span> <span class="nn">itertools</span> <span class="k">as</span> <span class="nn">it</span>
+
+<span class="kn">from</span> <span class="nn">dateutil.relativedelta</span> <span class="k">import</span> <span class="n">relativedelta</span>
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="traffic_munging"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.traffic_munging">[docs]</a><span class="k">def</span> <span class="nf">traffic_munging</span><span class="p">(</span><span class="n">df</span><span class="p">,</span>
+           <span class="n">val_str</span> <span class="o">=</span> <span class="s2">&quot;fd&quot;</span><span class="p">,</span>
+            <span class="n">val_name</span> <span class="o">=</span> <span class="s2">&quot;aadf&quot;</span><span class="p">,</span>
+            <span class="n">melt</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;traffic_munging</span>
+<span class="sd">    </span>
+<span class="sd">    Data muning for the traffic data, converts column names to lower case</span>
+<span class="sd">    set id and value columns of the dataframe and melts the dataframe to tall</span>
+<span class="sd">    data format</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments: </span>
+<span class="sd">        df (dataframe): the traffic data</span>
+<span class="sd">        val_str (string): this is the column in df that contains values for</span>
+<span class="sd">                          traffic flow</span>
+<span class="sd">        val_name (string): the name to give the traffic flow values column in</span>
+<span class="sd">                           the melted dataset</span>
+<span class="sd">        melt (bool): indicate whether or not to melt the dataset</span>
+<span class="sd">        </span>
+<span class="sd">    Returns: </span>
+<span class="sd">        df (dataframe): the processesd traffic data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#this frustrates me</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+    <span class="c1">#these are the value columns</span>
+    <span class="n">val_mask</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">val_str</span><span class="p">)</span> <span class="ow">in</span> <span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+    <span class="n">val_cols</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">val_mask</span><span class="p">]</span>
+
+    <span class="c1">#cols that are not the value columns are the id cols</span>
+    <span class="n">id_cols</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">invert</span><span class="p">(</span><span class="n">val_mask</span><span class="p">)]</span>
+
+    <span class="c1">#to tall</span>
+    <span class="k">if</span> <span class="n">melt</span><span class="p">:</span>
+        <span class="n">df</span>  <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">melt</span><span class="p">(</span><span class="n">df</span><span class="p">,</span>
+                       <span class="n">id_vars</span> <span class="o">=</span> <span class="n">id_cols</span><span class="p">,</span>
+                       <span class="n">value_vars</span> <span class="o">=</span> <span class="n">val_cols</span><span class="p">,</span>
+                       <span class="n">var_name</span> <span class="o">=</span> <span class="s2">&quot;vehicle_type&quot;</span><span class="p">,</span>
+                       <span class="n">value_name</span> <span class="o">=</span> <span class="n">val_name</span><span class="p">)</span>
+
+
+    <span class="k">return</span> <span class="n">df</span></div>
+
+    <span class="c1">#%%</span>
+<div class="viewcode-block" id="load_traffic_data"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.load_traffic_data">[docs]</a><span class="k">def</span> <span class="nf">load_traffic_data</span><span class="p">(</span>
+        <span class="n">proj_dir</span> <span class="o">=</span> <span class="s2">&quot;/home/eddr/Documents/Projects/GDP_nowcasting&quot;</span><span class="p">,</span>
+        <span class="n">traffic_loc</span> <span class="o">=</span> <span class="s2">&quot;/data/traffic/&quot;</span><span class="p">,</span>
+        <span class="n">major_roads</span> <span class="o">=</span> <span class="s2">&quot;AADF-data-major-roads.csv&quot;</span><span class="p">,</span>
+        <span class="n">minor_roads</span> <span class="o">=</span> <span class="s2">&quot;AADF-data-minor-roads.csv&quot;</span><span class="p">,</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="mi">2015</span><span class="p">,</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;major&quot;</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">],</span><span class="c1">#year to get data for</span>
+        <span class="n">e_n_col</span> <span class="o">=</span> <span class="s2">&quot;east_north&quot;</span><span class="p">,</span>
+        <span class="n">e_col</span> <span class="o">=</span> <span class="s2">&quot;s ref e&quot;</span><span class="p">,</span>
+        <span class="n">n_col</span> <span class="o">=</span> <span class="s2">&quot;s ref n&quot;</span><span class="p">,</span>
+        <span class="n">lat_long_col</span> <span class="o">=</span> <span class="s2">&quot;lat_long&quot;</span><span class="p">,</span>
+        <span class="n">lat_col</span> <span class="o">=</span> <span class="s2">&quot;s ref latitude&quot;</span><span class="p">,</span>
+        <span class="n">long_col</span> <span class="o">=</span> <span class="s2">&quot;s ref longitude&quot;</span>
+                      <span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;load_traffic_data</span>
+<span class="sd">    </span>
+<span class="sd">    function that loads the aadf data from the dft and sticks it all together.</span>
+<span class="sd">    calls traffic_munging</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        proj_dir (str): directory of the project</span>
+<span class="sd">        traffic_loc (str): folder with the traffic data</span>
+<span class="sd">        major_roads (str): name of the major roads aadf data file</span>
+<span class="sd">        minor_roads (str): name of the minor roads aadf data file</span>
+<span class="sd">        year (int): year of the data we want</span>
+<span class="sd">        key (list): a list of length 2 with a reference to the two data files</span>
+<span class="sd">        e_n_ocl (str): name of the column in traffic_df that will contain </span>
+<span class="sd">                       the easting and northing geospatail point data</span>
+<span class="sd">        e_col (str): column in traffic_df containing the easting co-ord</span>
+<span class="sd">        n_col (str): column in traffic_df containing the northing co-ord</span>
+<span class="sd">        lat_long_col (str):  name of the column in traffic_df that will contain </span>
+<span class="sd">                             the latitude and longitude geospatial point data</span>
+<span class="sd">        lat_col (str): column in traffic_df containing the latitude co-ord</span>
+<span class="sd">        long_col (str): column in traffic_df containing the longitude co-ord</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        traffic_df (dataframe): contains traffic data from both the major and</span>
+<span class="sd">                                minor roads datasets, processed from the year</span>
+<span class="sd">                                specified.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#load data</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">proj_dir</span><span class="p">)</span>
+    <span class="n">major_roads_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="n">traffic_loc</span> <span class="o">+</span> <span class="n">major_roads</span><span class="p">)</span>
+    <span class="n">minor_roads_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="n">traffic_loc</span> <span class="o">+</span> <span class="n">minor_roads</span><span class="p">)</span>
+
+    <span class="c1"># combine files</span>
+    <span class="n">traffic_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">major_roads_df</span><span class="p">,</span> <span class="n">minor_roads_df</span><span class="p">],</span>
+                           <span class="n">keys</span> <span class="o">=</span> <span class="n">key</span><span class="p">)</span>
+
+    <span class="c1"># mung</span>
+    <span class="n">traffic_df</span> <span class="o">=</span> <span class="n">traffic_munging</span><span class="p">(</span><span class="n">traffic_df</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">traffic_df</span><span class="o">.</span><span class="n">aadfyear</span> <span class="o">==</span> <span class="n">year</span>
+    <span class="c1"># we only take the most recent year as dataset is large, like will</span>
+    <span class="c1"># comfortably bork 16Gb of ram large</span>
+    <span class="n">traffic_df</span> <span class="o">=</span> <span class="n">traffic_df</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+    <span class="n">traffic_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+
+    <span class="c1">#create gis spatial point fields</span>
+    <span class="n">traffic_df</span><span class="p">[</span><span class="n">lat_long_col</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">sh</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">long</span><span class="p">)</span>
+                                <span class="k">for</span> <span class="n">lat</span><span class="p">,</span> <span class="n">long</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">traffic_df</span><span class="p">[</span><span class="n">lat_col</span><span class="p">],</span>
+                                                     <span class="n">traffic_df</span><span class="p">[</span><span class="n">long_col</span><span class="p">])</span>
+                               <span class="p">]</span>
+    <span class="c1">#easting and northing</span>
+    <span class="n">traffic_df</span><span class="p">[</span><span class="n">e_n_col</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">sh</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">east</span><span class="p">,</span> <span class="n">north</span><span class="p">)</span>
+                           <span class="k">for</span> <span class="n">east</span><span class="p">,</span> <span class="n">north</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">traffic_df</span><span class="p">[</span><span class="n">e_col</span><span class="p">],</span>
+                                                  <span class="n">traffic_df</span><span class="p">[</span><span class="n">n_col</span><span class="p">])</span>
+                          <span class="p">]</span>
+    <span class="c1">#tidy mem</span>
+    <span class="k">del</span> <span class="n">major_roads_df</span><span class="p">,</span> <span class="n">minor_roads_df</span>
+    <span class="n">gc</span><span class="o">.</span><span class="n">collect</span>
+
+    <span class="k">return</span> <span class="n">traffic_df</span></div>
+
+<span class="c1">#%%   </span>
+<div class="viewcode-block" id="load_shapefile"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.load_shapefile">[docs]</a><span class="k">def</span> <span class="nf">load_shapefile</span><span class="p">(</span><span class="n">shp_lookup</span><span class="p">,</span>
+                   <span class="n">shp_col</span><span class="p">,</span> 
+                   <span class="n">nuts_dir</span> <span class="o">=</span> <span class="s2">&quot;/data/geographic/shapefiles/NUTS/&quot;</span><span class="p">,</span>
+                   <span class="n">year</span> <span class="o">=</span> <span class="mi">2015</span><span class="p">,</span>
+                   <span class="n">year_col</span> <span class="o">=</span> <span class="s2">&quot;years&quot;</span><span class="p">,</span>
+                   <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+                  <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;load_shapefile</span>
+<span class="sd">    Load a shapefile with name stored in a dataframe column for a particular </span>
+<span class="sd">    year, also in a column within a directory.</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        shp_lookup (dataframe): contains the names of shapefiles by year</span>
+<span class="sd">        shp_col (str): name of the column containing the name of the datafile</span>
+<span class="sd">        nuts_dir (str): directory where the shapefile is kept</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        shp (GeoDataFrame): contains the shapefile, is empty if no shapefile</span>
+<span class="sd">                            is found</span>
+<span class="sd">    Warnings: </span>
+<span class="sd">        OSError : will return shp as an empty GeoDataFrame</span>
+<span class="sd">        TypeError: as OSError</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#get the filename</span>
+    <span class="n">year_mask</span> <span class="o">=</span> <span class="n">shp_lookup</span><span class="p">[</span><span class="n">year_col</span><span class="p">]</span> <span class="o">==</span> <span class="n">year</span>
+    <span class="n">shp_filename</span>  <span class="o">=</span> <span class="n">shp_lookup</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">year_mask</span><span class="p">][</span><span class="n">shp_col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c1">#try and load it</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="n">nuts_dir</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">shp_filename</span><span class="p">))</span>
+        <span class="n">shp</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="n">nuts_dir</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">shp_filename</span><span class="p">))</span>
+    <span class="c1">#returns a black shapefile an</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">shp</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Shapefile name or directory for: &quot;</span> <span class="o">+</span>
+                       <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span>
+                       <span class="n">nuts_dir</span> <span class="o">+</span>
+                       <span class="nb">str</span><span class="p">(</span><span class="n">shp_filename</span><span class="p">)</span> <span class="o">+</span> 
+                       <span class="s2">&quot; not found, empty GeoDataFrame returned&quot;</span><span class="p">)</span>
+        
+    <span class="k">return</span> <span class="n">shp</span></div>
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="mung_shapefiles"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.mung_shapefiles">[docs]</a><span class="k">def</span> <span class="nf">mung_shapefiles</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span>
+                    <span class="n">column_replace</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;nuts2_name&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="s2">&quot;nuts218nm&quot;</span><span class="p">,</span> 
+                                      <span class="s2">&quot;nuts215nm&quot;</span>
+                                     <span class="p">],</span>
+                      <span class="s2">&quot;nuts3_name&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="s2">&quot;nuts318nm&quot;</span><span class="p">,</span>
+                                      <span class="s2">&quot;nuts315nm&quot;</span>
+                                     <span class="p">],</span>
+                      <span class="s2">&quot;nuts_code&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="s2">&quot;nuts218cd&quot;</span><span class="p">,</span> 
+                                     <span class="s2">&quot;nuts215cd&quot;</span><span class="p">,</span>
+                                     <span class="s2">&quot;nuts318cd&quot;</span><span class="p">,</span>
+                                     <span class="s2">&quot;nuts315cd&quot;</span><span class="p">,</span>
+                                     <span class="s2">&quot;eurostat_n&quot;</span>
+                                    <span class="p">],</span>
+                      <span class="s2">&quot;shape_length&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="s2">&quot;SHAPE_Leng&quot;</span><span class="p">,</span> 
+                                        <span class="s2">&quot;st_lengths&quot;</span>
+                                       <span class="p">],</span>
+                      <span class="s2">&quot;shape_area&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="s2">&quot;st_areasha&quot;</span><span class="p">]</span>
+                     <span class="p">}</span>
+                    <span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;mung_shapefiles</span>
+<span class="sd">    </span>
+<span class="sd">    processing the shapefiles so they merge/append etc. better by homogenising </span>
+<span class="sd">    column names </span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        gdf (geodataframe): data loaded from a shapefile</span>
+<span class="sd">        column_replace (dict): key/value pairs where the value is a list of</span>
+<span class="sd">        strings that if they are a name of a column in gdf are replaced by </span>
+<span class="sd">        the key</span>
+<span class="sd">    Return:</span>
+<span class="sd">        gdf (geodataframe) : shapefile data with homogenised column names</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#lowercase column names</span>
+    <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+    
+    <span class="c1">#lowercase dict</span>
+    <span class="n">column_replace</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> 
+                           <span class="p">[</span><span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span> <span class="c1">#we expect values in dict are lists of strings</span>
+                          <span class="p">)</span>
+                          <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">column_replace</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    
+    <span class="c1"># search the through the dict of column names to replace </span>
+    <span class="k">for</span> <span class="n">new_name</span><span class="p">,</span> <span class="n">old_names</span> <span class="ow">in</span> <span class="n">column_replace</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        
+        <span class="c1">#rename columns that need replacing</span>
+        <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">new_name</span><span class="p">)</span> 
+                       <span class="k">if</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">old_names</span> 
+                       <span class="k">else</span> <span class="n">column_name</span> 
+                       <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">gdf</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span>
+        
+    <span class="k">return</span> <span class="n">gdf</span></div>
+ 
+<span class="c1">#%%    </span>
+<div class="viewcode-block" id="merge_traffic_with_nuts"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.merge_traffic_with_nuts">[docs]</a><span class="k">def</span> <span class="nf">merge_traffic_with_nuts</span><span class="p">(</span><span class="n">shapefile_lookup</span><span class="p">,</span>
+                     <span class="n">proj_dir</span> <span class="o">=</span> <span class="s2">&quot;/home/eddr/Documents/Projects/GDP_nowcasting&quot;</span><span class="p">,</span>
+                     <span class="n">traffic_loc</span> <span class="o">=</span> <span class="s2">&quot;/data/traffic/&quot;</span><span class="p">,</span>
+                     <span class="n">working_dir</span> <span class="o">=</span> <span class="s2">&quot;/working/data/&quot;</span><span class="p">,</span>
+                     <span class="n">major_roads</span> <span class="o">=</span> <span class="s2">&quot;AADF-data-major-roads.csv&quot;</span><span class="p">,</span>
+                     <span class="n">minor_roads</span> <span class="o">=</span> <span class="s2">&quot;AADF-data-minor-roads.csv&quot;</span><span class="p">,</span>
+                     <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;nuts2_ew&quot;</span><span class="p">,</span> 
+                                <span class="s2">&quot;nuts2_sco&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;nuts3_ew&quot;</span><span class="p">,</span>
+                                <span class="s2">&quot;nuts3_sco&quot;</span>
+                               <span class="p">],</span>
+                     <span class="n">nuts_levels</span><span class="o">=</span> <span class="p">[</span><span class="s2">&quot;nuts2&quot;</span><span class="p">,</span>
+                                   <span class="s2">&quot;nuts3&quot;</span>
+                                  <span class="p">],</span>
+                     <span class="n">df_suffix</span> <span class="o">=</span> <span class="s2">&quot;traffic&quot;</span><span class="p">,</span>
+                     <span class="n">geo_col</span> <span class="o">=</span> <span class="s2">&quot;east_north&quot;</span><span class="p">,</span>
+                     <span class="n">lookup_years_col</span> <span class="o">=</span> <span class="s2">&quot;years&quot;</span><span class="p">,</span>
+                     <span class="n">e_col</span> <span class="o">=</span> <span class="s2">&quot;s ref e&quot;</span><span class="p">,</span>
+                     <span class="n">n_col</span> <span class="o">=</span> <span class="s2">&quot;s ref n&quot;</span><span class="p">,</span>
+                     <span class="n">lat_long_col</span> <span class="o">=</span> <span class="s2">&quot;lat_long&quot;</span><span class="p">,</span>
+                     <span class="n">lat_col</span> <span class="o">=</span> <span class="s2">&quot;s ref latitude&quot;</span><span class="p">,</span>
+                     <span class="n">long_col</span> <span class="o">=</span> <span class="s2">&quot;s ref longitude&quot;</span><span class="p">,</span>
+                     <span class="n">crs_df</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                     <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+                     <span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;merge_traffic_with_nuts</span>
+<span class="sd">       </span>
+<span class="sd">    This takes the files for each year with aadf traffic dataset and then finds</span>
+<span class="sd">    the NUTS regions that the observation point sits in, then merges the </span>
+<span class="sd">    details of the NUTS region with that observation using a spatial join.</span>
+<span class="sd">    Outputs the resulting merged df as a .csv in the working directory    </span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        shapefile_lookup (Dataframe): contains the names of the shapefiles</span>
+<span class="sd">            to merge onto the traffic data</span>
+<span class="sd">        proj_dir (string): the project directory where the folder containing</span>
+<span class="sd">            traffic is stored</span>
+<span class="sd">        traffic_loc (string): folder within proj_dir where the traffic data is</span>
+<span class="sd">        working_dir (string): folder where the working data files are stored</span>
+<span class="sd">        major_roads (string): name of the file containing aadf observations for</span>
+<span class="sd">            major roads</span>
+<span class="sd">        minor_roads (string): name of the file containing aadf observations for</span>
+<span class="sd">            minor roads</span>
+<span class="sd">        columns (list): columns in shape_lookup that contain shapefile names</span>
+<span class="sd">        nuts_levels (list): names of the different NUTS levels</span>
+<span class="sd">        df_suffix (string): to append to column names from the traffic data </span>
+<span class="sd">            after the merge</span>
+<span class="sd">        geo_col (string): column in traffic data to put the spatial point </span>
+<span class="sd">            easobject created from easting and northing co-ords</span>
+<span class="sd">        e_col (string): column that contains the easting co-ord in traffic data</span>
+<span class="sd">        n_col (string): column that contains the northing co-ord in traffic </span>
+<span class="sd">            data</span>
+<span class="sd">        lat_long_col(string) column in traffic data to put the lattitude and</span>
+<span class="sd">            longitude spatial point bject created from co-ords</span>
+<span class="sd">        lat_col (string): column that contains the latitude co-ord in traffic </span>
+<span class="sd">            data</span>
+<span class="sd">        long_col (string): column that contains the longitude co-ord in traffic </span>
+<span class="sd">            data</span>
+<span class="sd">        crs_df (int): location of the crs data to copy from the shapefile over</span>
+<span class="sd">                        to the merged traffic/nuts merged geodataframe,</span>
+<span class="sd">        logger (logging.logger): logger for logging warnings, errors etc.</span>
+<span class="sd">        </span>
+<span class="sd">    Warnings:</span>
+<span class="sd">        IOError : if the merged dataframe cannot be created and saved into</span>
+<span class="sd">            a csv file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#get min and max years...</span>
+    <span class="n">min_year</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">shapefile_lookup</span><span class="p">[</span><span class="n">lookup_years_col</span><span class="p">])</span>
+    <span class="n">max_year</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">shapefile_lookup</span><span class="p">[</span><span class="n">lookup_years_col</span><span class="p">])</span><span class="o">+</span><span class="mi">1</span>
+    
+    <span class="c1">#...and iterate through them#</span>
+    <span class="k">for</span> <span class="n">year</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">min_year</span><span class="p">,</span> <span class="n">max_year</span><span class="p">):</span>
+        <span class="c1">#load the traffic dataset</span>
+        <span class="n">traffic_df</span> <span class="o">=</span> <span class="n">load_traffic_data</span><span class="p">(</span><span class="n">year</span> <span class="o">=</span> <span class="n">year</span><span class="p">,</span>
+                                       <span class="n">proj_dir</span> <span class="o">=</span> <span class="n">proj_dir</span><span class="p">,</span> 
+                                       <span class="n">traffic_loc</span> <span class="o">=</span> <span class="n">traffic_loc</span><span class="p">,</span>
+                                       <span class="n">major_roads</span> <span class="o">=</span> <span class="n">major_roads</span><span class="p">,</span>
+                                       <span class="n">minor_roads</span> <span class="o">=</span> <span class="n">minor_roads</span><span class="p">,</span>
+                                       <span class="n">e_n_col</span> <span class="o">=</span> <span class="n">geo_col</span><span class="p">,</span>
+                                       <span class="n">e_col</span> <span class="o">=</span> <span class="n">e_col</span><span class="p">,</span>
+                                       <span class="n">n_col</span> <span class="o">=</span> <span class="n">n_col</span><span class="p">,</span>
+                                       <span class="n">lat_long_col</span> <span class="o">=</span> <span class="n">lat_long_col</span><span class="p">,</span>
+                                       <span class="n">long_col</span> <span class="o">=</span> <span class="n">long_col</span>
+                                      <span class="p">)</span>
+    
+        <span class="c1">#load the relevant shapefiles</span>
+        <span class="n">shp_lst</span> <span class="o">=</span> <span class="p">[</span><span class="n">load_shapefile</span><span class="p">(</span><span class="n">shp_lookup</span> <span class="o">=</span> <span class="n">shapefile_lookup</span><span class="p">,</span> 
+                                  <span class="n">shp_col</span> <span class="o">=</span> <span class="n">col</span><span class="p">,</span> 
+                                  <span class="n">year</span> <span class="o">=</span> <span class="n">year</span>
+                                 <span class="p">)</span>
+                   <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">columns</span>
+                  <span class="p">]</span>
+        
+        <span class="c1">#mung column names before merge</span>
+        <span class="n">shp_lst</span> <span class="o">=</span> <span class="p">[</span><span class="n">mung_shapefiles</span><span class="p">(</span><span class="n">shp_file</span><span class="p">)</span> <span class="k">for</span> <span class="n">shp_file</span> <span class="ow">in</span> <span class="n">shp_lst</span><span class="p">]</span>
+        <span class="c1">#we need a geographic dataframe</span>
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">traffic_df</span><span class="p">,</span>
+                               <span class="n">crs</span> <span class="o">=</span> <span class="n">shp_lst</span><span class="p">[</span><span class="n">crs_df</span><span class="p">]</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span>
+                               <span class="n">geometry</span> <span class="o">=</span> <span class="n">geo_col</span>
+                              <span class="p">)</span>
+        <span class="n">gdf</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+        
+        <span class="c1"># each nuts level</span>
+        <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">nuts_levels</span><span class="p">:</span>
+            <span class="c1">#get the relevant shape files for that nuts level</span>
+            <span class="n">nuts_mask</span> <span class="o">=</span> <span class="p">[</span><span class="n">level</span> <span class="ow">in</span> <span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">]</span>
+            <span class="n">nuts_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">it</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">shp_lst</span><span class="p">,</span> <span class="n">nuts_mask</span><span class="p">))</span>
+            <span class="c1">#combine shapefiles into one</span>
+            <span class="n">nuts_shp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">nuts_list</span><span class="p">)</span>
+            <span class="c1">#spatial merge these with traffic dataset </span>
+            <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">sjoin</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> 
+                             <span class="n">nuts_shp</span><span class="p">,</span> 
+                             <span class="n">how</span> <span class="o">=</span> <span class="s2">&quot;left&quot;</span><span class="p">,</span> 
+                             <span class="n">op</span> <span class="o">=</span> <span class="s2">&quot;within&quot;</span><span class="p">,</span> 
+                             <span class="n">rsuffix</span> <span class="o">=</span> <span class="n">level</span><span class="p">)</span>
+
+        <span class="c1">#once merged with nuts, output the dataset</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="n">working_dir</span> <span class="o">+</span> <span class="n">df_suffix</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">year</span><span class="p">)</span>
+            <span class="n">gdf</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">file</span> <span class="o">+</span> <span class="s2">&quot;.csv&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Could not create &quot;</span> <span class="o">+</span> <span class="n">file</span><span class="p">,</span> <span class="s2">&quot;, skipping&quot;</span><span class="p">)</span></div>
+
+            
+<span class="c1">#%%</span>
+
+<div class="viewcode-block" id="merge_regions"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.merge_regions">[docs]</a><span class="k">def</span> <span class="nf">merge_regions</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> 
+                  <span class="n">nuts2_shp</span><span class="p">,</span> 
+                  <span class="n">nuts3_shp</span><span class="p">,</span> 
+                  <span class="n">geo_col</span> <span class="o">=</span> <span class="s2">&quot;east_north&quot;</span><span class="p">,</span> 
+                  <span class="n">df_suffix</span> <span class="o">=</span> <span class="s2">&quot;traffic&quot;</span>
+                 <span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;merge_regions</span>
+<span class="sd">    Function that merges a pandas dataframe containing geospatail points</span>
+<span class="sd">    with the descriptive data (e.g region name) from the nuts2 and nuts3</span>
+<span class="sd">    shapefiles.</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        df (dataframe): containing data (e.g from load_traffic_data) to merge</span>
+<span class="sd">        nuts2_shp (geodataframe): nuts2 region shapefile</span>
+<span class="sd">        nuts3_shp (geodataframe): nuts3 region shapefile</span>
+<span class="sd">        geo_col (str): column name in df that contains the spatial point data</span>
+<span class="sd">        df_suffix (str): to add to columnnames in df in returned geodataframe</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        gdf (geodataframe): made up of df merged with nuts2 and nuts3 </span>
+<span class="sd">                                shapefiles data</span>
+<span class="sd">                                </span>
+<span class="sd">    Warnings:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nuts2_shp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span> 
+        <span class="c1">#create a geopandas dataframe and remove index as merge doesn&#39;t like</span>
+        <span class="c1">#multiindex dataframes</span>
+        
+        <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">crs</span> <span class="o">=</span> <span class="n">nuts2_shp</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">geometry</span> <span class="o">=</span> <span class="n">geo_col</span><span class="p">)</span>
+        <span class="n">gdf</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="c1">#return the geodataframe merged with the shapefile region data by spatial</span>
+        <span class="c1">#point</span>
+        <span class="n">gdf</span> <span class="o">=</span>  <span class="n">gpd</span><span class="o">.</span><span class="n">sjoin</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> 
+                         <span class="n">nuts2_shp</span><span class="p">,</span> 
+                         <span class="n">how</span> <span class="o">=</span> <span class="s2">&quot;left&quot;</span><span class="p">,</span> 
+                         <span class="n">op</span> <span class="o">=</span> <span class="s2">&quot;within&quot;</span><span class="p">,</span> 
+                         <span class="n">lsuffix</span> <span class="o">=</span> <span class="n">df_suffix</span><span class="p">,</span> 
+                         <span class="n">rsuffix</span> <span class="o">=</span> <span class="s2">&quot;nuts2&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;nuts2_shp is empty, unable to merge NUTS2 regions&quot;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="n">nuts3_shp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>    
+        
+        <span class="c1">#if gdf hasn&#39;t been created, i.e nuts2_shp has not been passed</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">gdf</span>
+        <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+            <span class="n">gdf</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">crs</span> <span class="o">=</span> <span class="n">nuts2_shp</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">geometry</span> <span class="o">=</span> <span class="n">geo_col</span><span class="p">)</span>
+        
+            
+        <span class="n">gdf</span> <span class="o">=</span>  <span class="n">gpd</span><span class="o">.</span><span class="n">sjoin</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> 
+                             <span class="n">nuts3_shp</span><span class="p">,</span> 
+                             <span class="n">how</span> <span class="o">=</span> <span class="s2">&quot;left&quot;</span><span class="p">,</span> 
+                             <span class="n">op</span> <span class="o">=</span> <span class="s2">&quot;within&quot;</span><span class="p">,</span> 
+                             <span class="n">rsuffix</span> <span class="o">=</span> <span class="s2">&quot;nuts3&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;nuts3_shp is empty, unable to merge NUTS3 regions&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span> <span class="p">:</span>
+        <span class="n">gdf</span>
+    <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Did not merge any NUTS level regions&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    
+    <span class="k">return</span> <span class="n">gdf</span></div>
+
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="load_gdp"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.load_gdp">[docs]</a><span class="k">def</span> <span class="nf">load_gdp</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> 
+             <span class="n">area</span><span class="p">,</span> 
+             <span class="n">loc</span> <span class="o">=</span> <span class="s2">&quot;/data/GDP/&quot;</span><span class="p">,</span> 
+             <span class="n">geo_col</span> <span class="o">=</span> <span class="s2">&quot;geo&quot;</span><span class="p">,</span>
+             <span class="n">time_col</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span>
+             <span class="n">format_cols</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;load_gdp</span>
+<span class="sd">    loads and does a bit of cleaning of gsp_data</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        loc (string): location of the file to be loaded.</span>
+<span class="sd">        file (string): name of the file to be loaded.</span>
+<span class="sd">        area (string): NUTS level the dataset is set at</span>
+<span class="sd">        geo_col (string): column in file containing geograpical area name    </span>
+<span class="sd">        time_col (string): column containing data on the time the data refers</span>
+<span class="sd">            to</span>
+<span class="sd">        format_cols (bool): indicates if we need to format the column names</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        gdp_df (dataframe): gdp data for nuts regions </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">gdp_df</span>  <span class="o">=</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="n">loc</span> <span class="o">+</span> <span class="n">file</span><span class="p">,</span> 
+                                 <span class="n">encoding</span> <span class="o">=</span> <span class="s2">&quot;latin-1&quot;</span><span class="p">))</span>
+    
+    <span class="c1"># lowercase for consitency/easy referencing</span>
+    <span class="n">gdp_df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">gdp_df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+
+    
+    <span class="k">if</span> <span class="n">format_cols</span><span class="p">:</span>
+        <span class="c1">#set location area type</span>
+        <span class="n">gdp_df</span><span class="p">[</span><span class="n">geo_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdp_df</span><span class="p">[</span><span class="n">geo_col</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+   
+        <span class="c1">#more sensible column names</span>
+        <span class="n">gdp_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;geo&quot;</span> <span class="p">:</span> <span class="n">area</span><span class="p">,</span>
+                                 <span class="s2">&quot;value&quot;</span> <span class="p">:</span> <span class="n">area</span> <span class="o">+</span> <span class="s2">&quot;_value&quot;</span><span class="p">,</span>
+                                 <span class="s2">&quot;unit&quot;</span> <span class="p">:</span> <span class="n">area</span> <span class="o">+</span> <span class="s2">&quot;_unit&quot;</span><span class="p">,</span>
+                                 <span class="s2">&quot;flag and footnotes&quot;</span> <span class="p">:</span> <span class="n">area</span> 
+                                                        <span class="o">+</span> <span class="s2">&quot;_flag and footnotes&quot;</span>
+                                 <span class="p">},</span>
+                              <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span>
+                     <span class="p">)</span>   
+        
+    <span class="n">gdp_col</span> <span class="o">=</span> <span class="n">area</span> <span class="o">+</span> <span class="s2">&quot;_value&quot;</span>
+    <span class="c1">#formatting</span>
+    <span class="n">gdp_df</span> <span class="o">=</span> <span class="n">string_to_num</span><span class="p">(</span><span class="n">gdp_df</span><span class="p">,</span> <span class="p">[</span><span class="n">gdp_col</span><span class="p">])</span>
+    <span class="n">gdp_df</span><span class="p">[</span><span class="n">time_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">gdp_df</span><span class="p">[</span><span class="n">time_col</span><span class="p">],</span> <span class="nb">format</span> <span class="o">=</span> <span class="s2">&quot;%Y&quot;</span><span class="p">)</span>
+    
+    <span class="c1">#get gdp change measures</span>
+    <span class="n">gdp_df</span> <span class="o">=</span> <span class="n">get_growth</span><span class="p">(</span><span class="n">df</span> <span class="o">=</span> <span class="n">gdp_df</span><span class="p">,</span>
+                        <span class="n">area_col</span> <span class="o">=</span> <span class="n">area</span><span class="p">,</span>
+                        <span class="n">gdp_col</span> <span class="o">=</span> <span class="n">area</span> <span class="o">+</span> <span class="s2">&quot;_value&quot;</span><span class="o">.</span><span class="n">capitalize</span><span class="p">(),</span>               
+                        <span class="n">time_col</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span> <span class="p">,</span>
+                        <span class="n">ratio_col</span> <span class="o">=</span> <span class="n">area</span> <span class="o">+</span> <span class="s2">&quot;_gdp_ratio&quot;</span><span class="p">,</span>
+                        <span class="n">growth_col</span> <span class="o">=</span> <span class="n">area</span> <span class="o">+</span> <span class="s2">&quot;_growth&quot;</span>
+                       <span class="p">)</span> 
+    
+    <span class="k">return</span> <span class="n">gdp_df</span>    </div>
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="merge_traffic_with_gdp"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.merge_traffic_with_gdp">[docs]</a><span class="k">def</span> <span class="nf">merge_traffic_with_gdp</span><span class="p">(</span><span class="n">traffic_df</span><span class="p">,</span> 
+                           <span class="n">nuts2_gdp_df</span><span class="p">,</span>
+                           <span class="n">nuts3_gdp_df</span><span class="p">,</span>
+                           <span class="n">nat_gdp_df</span><span class="p">,</span>
+                           <span class="n">file_loc</span> <span class="o">=</span> <span class="s2">&quot;/working/data/&quot;</span><span class="p">,</span>
+                           <span class="n">traffic_year_col</span> <span class="o">=</span> <span class="s2">&quot;aadfyear&quot;</span><span class="p">,</span>
+                           <span class="n">traffic_nuts2_col</span> <span class="o">=</span> <span class="s2">&quot;nuts2_name&quot;</span><span class="p">,</span>
+                           <span class="n">traffic_nuts3_col</span> <span class="o">=</span> <span class="s2">&quot;nuts3_name&quot;</span><span class="p">,</span>
+                           <span class="n">gdp_year_col</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span>
+                           <span class="n">nat_year_col</span> <span class="o">=</span> <span class="s2">&quot;year&quot;</span><span class="p">,</span>
+                           <span class="n">gdp_nuts2_col</span> <span class="o">=</span> <span class="s2">&quot;nuts2&quot;</span><span class="p">,</span>
+                           <span class="n">gdp_nuts3_col</span> <span class="o">=</span> <span class="s2">&quot;nuts3&quot;</span><span class="p">,</span>
+                           <span class="n">gdp_nuts2_val_col</span> <span class="o">=</span> <span class="s2">&quot;nuts2_value&quot;</span><span class="p">,</span>
+                           <span class="n">gdp_nuts3_val_col</span> <span class="o">=</span> <span class="s2">&quot;nuts3_value&quot;</span>
+                          <span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;merge_traffic_with_gdp</span>
+<span class="sd">    </span>
+<span class="sd">    merges traffic data that has been labelled with the correct data nuts </span>
+<span class="sd">    regions with the gdp for those regions</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        traffic_df (DataFrame): contains the traffic data</span>
+<span class="sd">        nuts2_gdp_df (DataFrame): nuts2 regions gdp data</span>
+<span class="sd">        nuts3_gdp_df (DataFrame): nuts2 regions gdp data</span>
+<span class="sd">        national_gdp_df (DataFrame): national gdp data</span>
+<span class="sd">        traffic_year_col (string): column in traffic_df that indicates what</span>
+<span class="sd">                                   year the data corresponds to</span>
+<span class="sd">        nat_year_col (string): column in nat_gdp_df that indicates what</span>
+<span class="sd">                                   year the data corresponds to</span>
+<span class="sd">        traffic_nuts2_col (string): column indicating nut2 region observation</span>
+<span class="sd">                                    is in, in traffic_df</span>
+<span class="sd">        traffic_nuts3_col (string): column indicating nut3 region observation</span>
+<span class="sd">                                    is in, in traffic_df</span>
+<span class="sd">        gdp_year_col (string): column in nuts2_gdp_df and nuts3_gdp_df where</span>
+<span class="sd">                                year is stored</span>
+<span class="sd">        gdp_nuts2_col (string): column for nuts2 region in nuts2_gdp_df</span>
+<span class="sd">        gdp_nuts3_col (string): column for nuts3 region in nuts3_gdp_df</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#lower case for consitency</span>
+    <span class="n">traffic_df</span><span class="p">[</span><span class="n">traffic_nuts2_col</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">traffic_df</span><span class="p">[</span><span class="n">traffic_nuts2_col</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                                    <span class="p">]</span>
+    <span class="n">traffic_df</span><span class="p">[</span><span class="n">traffic_nuts3_col</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">traffic_df</span><span class="p">[</span><span class="n">traffic_nuts3_col</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                                    <span class="p">]</span>
+    
+    <span class="c1">#one merge for each nuts region</span>
+    <span class="k">if</span> <span class="n">nuts2_gdp_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">traffic_gdp_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span> <span class="o">=</span> <span class="n">traffic_df</span><span class="p">,</span> 
+                                  <span class="n">right</span> <span class="o">=</span> <span class="n">nuts2_gdp_df</span><span class="p">,</span>
+                                  <span class="n">left_on</span> <span class="o">=</span> <span class="p">[</span><span class="n">traffic_year_col</span><span class="p">,</span> 
+                                             <span class="n">traffic_nuts2_col</span>
+                                            <span class="p">],</span>
+                                  <span class="n">right_on</span> <span class="o">=</span> <span class="p">[</span><span class="n">gdp_year_col</span> <span class="p">,</span>
+                                              <span class="n">gdp_nuts2_col</span>
+                                             <span class="p">],</span>
+                                  <span class="n">how</span> <span class="o">=</span> <span class="s2">&quot;left&quot;</span>
+                                 <span class="p">)</span>
+        
+    <span class="k">if</span> <span class="n">nuts3_gdp_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>   
+        <span class="n">traffic_gdp_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span> <span class="o">=</span> <span class="n">traffic_gdp_df</span><span class="p">,</span> 
+                                  <span class="n">right</span> <span class="o">=</span> <span class="n">nuts3_gdp_df</span><span class="p">,</span>
+                                  <span class="n">left_on</span> <span class="o">=</span> <span class="p">[</span><span class="n">traffic_year_col</span><span class="p">,</span>
+                                             <span class="n">traffic_nuts3_col</span>
+                                            <span class="p">],</span>
+                                  <span class="n">right_on</span> <span class="o">=</span> <span class="p">[</span><span class="n">gdp_year_col</span><span class="p">,</span> 
+                                              <span class="n">gdp_nuts3_col</span>
+                                             <span class="p">],</span>
+                                  <span class="n">how</span> <span class="o">=</span> <span class="s2">&quot;left&quot;</span>
+                                 <span class="p">)</span>
+        
+    <span class="k">if</span> <span class="n">nat_gdp_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>   
+        <span class="n">traffic_gdp_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span> <span class="o">=</span> <span class="n">traffic_gdp_df</span><span class="p">,</span> 
+                                  <span class="n">right</span> <span class="o">=</span> <span class="n">nat_gdp_df</span><span class="p">,</span>
+                                  <span class="n">left_on</span> <span class="o">=</span> <span class="p">[</span><span class="n">traffic_year_col</span>
+                                            <span class="p">],</span>
+                                  <span class="n">right_on</span> <span class="o">=</span> <span class="p">[</span><span class="n">nat_year_col</span>
+                                             <span class="p">],</span>
+                                  <span class="n">how</span> <span class="o">=</span> <span class="s2">&quot;left&quot;</span>
+                                 <span class="p">)</span>
+    
+    <span class="c1">#assume first in this unique col is the year</span>
+    <span class="n">years</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">(</span><span class="n">traffic_gdp_df</span><span class="p">[</span> <span class="n">traffic_year_col</span><span class="p">])</span>
+    
+    <span class="n">year</span> <span class="o">=</span> <span class="n">years</span><span class="o">.</span><span class="n">year</span><span class="o">.</span><span class="n">unique</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    
+    
+
+    <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;traffic_gdp_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">year</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.csv&quot;</span>
+        
+    <span class="c1">#gdp values are acutally given as strings, so change</span>
+    <span class="n">traffic_gdp_df</span> <span class="o">=</span> <span class="n">string_to_num</span><span class="p">(</span><span class="n">traffic_gdp_df</span><span class="p">,</span> 
+                                   <span class="p">[</span><span class="n">gdp_nuts2_val_col</span><span class="p">,</span> <span class="n">gdp_nuts3_val_col</span><span class="p">]</span>
+                                   <span class="p">)</span>
+    
+    <span class="c1">#save as a working data file</span>
+    <span class="n">traffic_gdp_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="n">file_loc</span> <span class="o">+</span> <span class="n">filename</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">traffic_gdp_df</span></div>
+    
+<span class="c1">#%%</span>
+
+<div class="viewcode-block" id="merge_nuts_regions"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.merge_nuts_regions">[docs]</a><span class="k">def</span> <span class="nf">merge_nuts_regions</span><span class="p">(</span><span class="n">df</span><span class="p">,</span>
+                       <span class="n">df_suffix</span> <span class="o">=</span> <span class="s2">&quot;traffic&quot;</span><span class="p">,</span> 
+                       <span class="n">proj_dir</span> <span class="o">=</span> <span class="s2">&quot;/home/eddr/Documents/Projects/GDP_nowcasting&quot;</span><span class="p">,</span>
+                       <span class="n">shape_loc</span> <span class="o">=</span> <span class="s2">&quot;/data/geographic/shapefiles/&quot;</span><span class="p">,</span>
+                       <span class="n">nuts2_loc</span> <span class="o">=</span> <span class="s2">&quot;nuts2_2018/&quot;</span><span class="p">,</span>
+                       <span class="n">nuts3_loc</span> <span class="o">=</span> <span class="s2">&quot;nuts3_2018/&quot;</span><span class="p">,</span>
+                       <span class="n">nuts2_file</span> <span class="o">=</span> <span class="s2">&quot;NUTS_Level_2_January_2018_Full_Clipped_Boundaries_in_the_United_Kingdom.shp&quot;</span><span class="p">,</span>
+                       <span class="n">nuts3_file</span> <span class="o">=</span> <span class="s2">&quot;NUTS_Level_3_January_2018_Full_Extent_Boundaries_in_the_United_Kingdom.shp&quot;</span><span class="p">,</span>
+                       <span class="n">geo_col</span> <span class="o">=</span> <span class="s2">&quot;east_north&quot;</span>
+                      <span class="p">):</span>
+    
+
+    <span class="sd">&quot;&quot;&quot;merge_nuts_regions</span>
+<span class="sd">    </span>
+<span class="sd">    Basically a wrapper for merge_regions that loads in the nuts shapefiles</span>
+<span class="sd">    </span>
+<span class="sd">    arguments:</span>
+<span class="sd">        df (dataframe): containing data (e.g from load_traffic_data) to merge</span>
+<span class="sd">        df_suffix (str): to add to the column names that were originally in df</span>
+<span class="sd">        shape_loc (str): directory of the shapefiles</span>
+<span class="sd">        nuts2_loc (str): folder for the nuts2 shapefile</span>
+<span class="sd">        nuts3_loc (str): folder for the nuts3 shapefile</span>
+<span class="sd">        nuts2_file (str): nuts2 shapefile name</span>
+<span class="sd">        nuts3_file (str): nuts3 shapefile name</span>
+<span class="sd">        </span>
+<span class="sd">    returns:</span>
+<span class="sd">        merge_regions output (geodataframe): made up of df merged with nuts2 </span>
+<span class="sd">                                             and nuts3 shapefiles data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">nuts2_shp</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">proj_dir</span> <span class="o">+</span> <span class="n">shape_loc</span> <span class="o">+</span> <span class="n">nuts2_loc</span> <span class="o">+</span> <span class="n">nuts2_file</span><span class="p">)</span>
+    <span class="n">nuts3_shp</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">proj_dir</span> <span class="o">+</span> <span class="n">shape_loc</span> <span class="o">+</span> <span class="n">nuts3_loc</span> <span class="o">+</span> <span class="n">nuts3_file</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">merge_regions</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">nuts2_shp</span><span class="p">,</span> <span class="n">nuts3_shp</span><span class="p">,</span> <span class="n">geo_col</span><span class="p">,</span> <span class="n">df_suffix</span><span class="p">)</span></div>
+
+<span class="c1">#%%</span>
+    
+<div class="viewcode-block" id="get_map"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.get_map">[docs]</a><span class="k">def</span> <span class="nf">get_map</span><span class="p">(</span><span class="n">maps_df</span><span class="p">,</span>
+            <span class="n">countries_col</span> <span class="o">=</span> <span class="s2">&quot;countries&quot;</span><span class="p">,</span> 
+            <span class="n">country_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;uk&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="s2">&quot;united_kingdom&quot;</span><span class="p">],</span>
+                            <span class="s2">&quot;eng_wal&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="s2">&quot;england_wales&quot;</span><span class="p">],</span>
+                            <span class="s2">&quot;sco&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="s2">&quot;scotland&quot;</span><span class="p">]},</span>
+            <span class="n">shapefile_col</span> <span class="o">=</span> <span class="s2">&quot;shapefiles&quot;</span><span class="p">,</span>
+            <span class="n">filename_col</span> <span class="o">=</span> <span class="s2">&quot;filename&quot;</span><span class="p">,</span>
+            <span class="n">nuts_col</span> <span class="o">=</span> <span class="s2">&quot;nuts_level&quot;</span><span class="p">,</span>
+            <span class="n">year_col</span> <span class="o">=</span> <span class="s2">&quot;year&quot;</span>
+           <span class="p">):</span>
+
+
+    <span class="c1">#is there a shapefile with the whole of the uk?</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">maps_df</span><span class="p">[</span><span class="n">countries_col</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">country_dict</span><span class="p">[</span><span class="s2">&quot;uk&quot;</span><span class="p">]):</span>
+        
+        <span class="c1">#ignore all that aren&#39;t a nuts2 uk shape file predating the dataset</span>
+        <span class="n">uk_mask</span> <span class="o">=</span> <span class="p">[</span><span class="n">country</span> <span class="ow">in</span> <span class="n">country_dict</span><span class="p">[</span><span class="s2">&quot;uk&quot;</span><span class="p">]</span>
+                   <span class="k">for</span> <span class="n">country</span> <span class="ow">in</span> <span class="n">maps_df</span><span class="p">[</span><span class="n">countries_col</span><span class="p">]</span>
+                  <span class="p">]</span>
+        
+        <span class="c1">#get the map</span>
+        <span class="n">uk_map</span> <span class="o">=</span> <span class="n">get_most_recent_map</span><span class="p">(</span><span class="n">maps_df</span><span class="p">[</span><span class="n">uk_mask</span><span class="p">])</span>
+    
+    <span class="c1">#there isn&#39;t a shape file with the whole of the uk</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1">#find the england and wales shapefile</span>
+        <span class="n">eng_wal_mask</span> <span class="o">=</span> <span class="p">[</span><span class="n">country</span> <span class="ow">in</span> <span class="n">country_dict</span><span class="p">[</span><span class="s2">&quot;eng_wal&quot;</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">country</span> <span class="ow">in</span> <span class="n">maps_df</span><span class="p">[</span><span class="n">countries_col</span><span class="p">]</span>
+                       <span class="p">]</span>
+        <span class="n">eng_wal_map</span> <span class="o">=</span> <span class="n">get_recent_map</span><span class="p">(</span><span class="n">maps_df</span><span class="p">[</span><span class="n">eng_wal_mask</span><span class="p">])</span>
+        
+        <span class="c1">#find scotland shapefile</span>
+        <span class="n">sco_mask</span> <span class="o">=</span> <span class="p">[</span><span class="n">country</span> <span class="ow">in</span> <span class="n">country_dict</span><span class="p">[</span><span class="s2">&quot;sco&quot;</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">country</span> <span class="ow">in</span> <span class="n">maps_df</span><span class="p">[</span><span class="n">countries_col</span><span class="p">]</span>
+                   <span class="p">]</span> 
+        <span class="n">sco_map</span> <span class="o">=</span> <span class="n">get_recent_map</span><span class="p">(</span><span class="n">maps_df</span><span class="p">[</span><span class="n">sco_mask</span><span class="p">])</span>
+        
+        <span class="c1">#merge the two maps, just like in 1707</span>
+        <span class="n">uk_shp</span> <span class="o">=</span> <span class="n">eng_wal_map</span><span class="p">[</span><span class="n">shapefile_col</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sco_map</span><span class="p">)</span>
+        
+        <span class="n">uk_map</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Dataframe</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">filename_col</span> <span class="p">:</span> <span class="p">{</span><span class="s2">&quot;eng_wal_map&quot;</span> <span class="p">:</span> <span class="n">eng_wal_map</span><span class="p">[</span><span class="n">filename_col</span><span class="p">],</span>
+                             <span class="s2">&quot;sco_map&quot;</span> <span class="p">:</span> <span class="n">sco_map</span><span class="p">[</span><span class="n">filename_col</span><span class="p">]</span>
+                            <span class="p">},</span>
+             <span class="n">nuts_col</span> <span class="p">:</span> <span class="n">eng_wal_map</span><span class="p">[</span><span class="n">nuts_col</span><span class="p">],</span>
+             <span class="n">year_col</span> <span class="p">:</span> <span class="p">{</span><span class="s2">&quot;eng_wal_map_year&quot;</span> <span class="p">:</span> <span class="n">eng_wal_map</span><span class="p">[</span><span class="n">year_col</span><span class="p">],</span>
+                         <span class="s2">&quot;sco_map_year&quot;</span> <span class="p">:</span> <span class="n">sco_map</span><span class="p">[</span><span class="n">year_col</span><span class="p">]},</span>
+             <span class="n">shapefile_col</span> <span class="p">:</span> <span class="n">uk_shp</span>            
+            <span class="p">}</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">uk_map</span></div>
+<span class="c1">#%%</span>
+    
+<div class="viewcode-block" id="merge_all_traffic_gdp"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.merge_all_traffic_gdp">[docs]</a><span class="k">def</span> <span class="nf">merge_all_traffic_gdp</span><span class="p">(</span><span class="n">nuts2_gdp_df</span><span class="p">,</span>
+                          <span class="n">nuts3_gdp_df</span><span class="p">,</span>
+                          <span class="n">nat_gdp_df</span><span class="p">,</span>
+                          <span class="n">traffic_loc</span><span class="p">,</span>
+                          <span class="n">file_loc</span> <span class="o">=</span> <span class="s2">&quot;/working/data/&quot;</span><span class="p">,</span>
+                          <span class="n">traffic_year_col</span> <span class="o">=</span> <span class="s2">&quot;aadfyear&quot;</span><span class="p">,</span>
+                          <span class="n">traffic_nuts2_col</span> <span class="o">=</span> <span class="s2">&quot;nuts2_name&quot;</span><span class="p">,</span>
+                          <span class="n">traffic_nuts3_col</span> <span class="o">=</span> <span class="s2">&quot;nuts3_name&quot;</span><span class="p">,</span>
+                          <span class="n">gdp_year_col</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span>
+                          <span class="n">nat_year_col</span> <span class="o">=</span> <span class="s2">&quot;year&quot;</span><span class="p">,</span>
+                          <span class="n">gdp_nuts2_col</span> <span class="o">=</span> <span class="s2">&quot;nuts2&quot;</span><span class="p">,</span>
+                          <span class="n">gdp_nuts3_col</span> <span class="o">=</span> <span class="s2">&quot;nuts3&quot;</span><span class="p">,</span>
+                          <span class="n">gdp_nuts2_val_col</span> <span class="o">=</span> <span class="s2">&quot;nuts2_value&quot;</span><span class="p">,</span>
+                          <span class="n">gdp_nuts3_val_col</span> <span class="o">=</span> <span class="s2">&quot;nuts3_value&quot;</span>
+                         <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;merge_all_traffic_gdp</span>
+<span class="sd">    </span>
+<span class="sd">    merges all traffic data files in the given folder, that have been labelled </span>
+<span class="sd">    with the correct nuts regions, with the gdp for those regions</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        nuts2_gdp_df (DataFrame): nuts2 regions gdp data</span>
+<span class="sd">        nuts3_gdp_df (DataFrame): nuts2 regions gdp data</span>
+<span class="sd">        national_gdp_df (DataFrame): national gdp data</span>
+<span class="sd">        traffic_loc (string): folder path for where all the traffic data is </span>
+<span class="sd">                              stored</span>
+<span class="sd">        traffic_year_col (string): column in traffic_df that indicates what</span>
+<span class="sd">                                   year the data corresponds to</span>
+<span class="sd">        traffic_nuts2_col (string): column indicating nut2 region observation</span>
+<span class="sd">                                    is in, in traffic_df</span>
+<span class="sd">        traffic_nuts3_col (string): column indicating nut3 region observation</span>
+<span class="sd">                                    is in, in traffic_df</span>
+<span class="sd">        gdp_year_col (string): column in nuts2_gdp_df and nuts3_gdp_df where</span>
+<span class="sd">                                year is stored</span>
+<span class="sd">        nat_year_col (string): column in nat_gdp_df that indicates what</span>
+<span class="sd">                           year the data corresponds to</span>
+<span class="sd">        gdp_nuts2_col (string): column for nuts2 region in nuts2_gdp_df</span>
+<span class="sd">        gdp_nuts3_col (string): column for nuts3 region in nuts3_gdp_df</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#find files that look like traffic data</span>
+    <span class="n">traffic_data_files</span> <span class="o">=</span> <span class="n">files_looks_like</span><span class="p">(</span><span class="n">traffic_loc</span><span class="p">)</span>
+
+    <span class="c1">#load each file and merge with gdp</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">traffic_data_files</span><span class="p">:</span>    
+        <span class="n">traffic_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="c1">#format time</span>
+        <span class="n">traffic_df</span><span class="p">[</span><span class="n">traffic_year_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span>
+                                                <span class="n">traffic_df</span><span class="p">[</span><span class="n">traffic_year_col</span><span class="p">],</span> 
+                                                <span class="nb">format</span> <span class="o">=</span> <span class="s2">&quot;%Y&quot;</span>
+                                                     <span class="p">)</span>
+    
+        <span class="n">merge_traffic_with_gdp</span><span class="p">(</span><span class="n">traffic_df</span><span class="p">,</span> 
+                               <span class="n">nuts2_gdp_df</span> <span class="o">=</span> <span class="n">nuts2_gdp_df</span><span class="p">,</span>
+                               <span class="n">nuts3_gdp_df</span> <span class="o">=</span> <span class="n">nuts3_gdp_df</span><span class="p">,</span>
+                               <span class="n">nat_gdp_df</span> <span class="o">=</span> <span class="n">nat_gdp_df</span><span class="p">,</span>
+                               <span class="n">file_loc</span> <span class="o">=</span> <span class="n">file_loc</span><span class="p">,</span>
+                               <span class="n">traffic_year_col</span> <span class="o">=</span> <span class="n">traffic_year_col</span> <span class="p">,</span>
+                               <span class="n">traffic_nuts2_col</span> <span class="o">=</span> <span class="n">traffic_nuts2_col</span><span class="p">,</span>
+                               <span class="n">traffic_nuts3_col</span> <span class="o">=</span> <span class="n">traffic_nuts3_col</span><span class="p">,</span>
+                               <span class="n">gdp_year_col</span> <span class="o">=</span> <span class="n">gdp_year_col</span><span class="p">,</span>
+                               <span class="n">nat_year_col</span> <span class="o">=</span> <span class="n">nat_year_col</span><span class="p">,</span>
+                               <span class="n">gdp_nuts2_col</span> <span class="o">=</span> <span class="n">gdp_nuts2_col</span><span class="p">,</span>
+                               <span class="n">gdp_nuts3_col</span> <span class="o">=</span> <span class="n">gdp_nuts3_col</span>
+                              <span class="p">)</span></div>
+
+<span class="c1">#%% </span>
+
+<div class="viewcode-block" id="files_looks_like"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.files_looks_like">[docs]</a><span class="k">def</span> <span class="nf">files_looks_like</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">looks_like</span> <span class="o">=</span> <span class="s2">&quot;.*traffic[0-9]&quot;</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="s2">&quot;csv&quot;</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;file_looks_like</span>
+<span class="sd">    returns files in a folder of a specified extenstion that has a filename </span>
+<span class="sd">    like a partiular reg expression</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        loc (string): path of the folder where the files are stored</span>
+<span class="sd">        looks_like (string): regex to match the filename with</span>
+<span class="sd">        ext (string): extention of the files to match e.g csv</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        matches (list): the files that match the regex with the extension.</span>
+<span class="sd">        </span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">loc</span> <span class="o">+</span> <span class="s2">&quot;/*&quot;</span> <span class="o">+</span> <span class="n">ext</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="nb">bool</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">looks_like</span><span class="p">,</span> <span class="n">file</span><span class="p">))</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]</span>
+    <span class="n">matches</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">it</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">files</span><span class="p">,</span><span class="n">mask</span><span class="p">))</span>
+    
+    <span class="k">return</span> <span class="n">matches</span></div>
+
+<span class="c1">#%% </span>
+
+<div class="viewcode-block" id="drop_duplicate_rows"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.drop_duplicate_rows">[docs]</a><span class="k">def</span> <span class="nf">drop_duplicate_rows</span><span class="p">(</span><span class="n">df</span><span class="p">,</span>
+                        <span class="n">col_to_del</span> <span class="o">=</span> <span class="s2">&quot;Unnamed&quot;</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;drop_duplicate_rows</span>
+<span class="sd">    </span>
+<span class="sd">    Sometimes in data munging the rows get repeated with some extra </span>
+<span class="sd">    unwanted columns with names like &quot;Unnamed: 1&quot;. This solves that issue</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        df (DataFrame): dataframe with the repeating rows</span>
+<span class="sd">        col_to_del (string): name of column or word in column names we need </span>
+<span class="sd">            to get rid of</span>
+<span class="sd">    </span>
+<span class="sd">    Returns: </span>
+<span class="sd">        df (Dataframe): dataframe without repeating rows in fixed, incremental</span>
+<span class="sd">            index</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#drop these unneeded cols and rows</span>
+    <span class="n">drop_mask</span> <span class="o">=</span> <span class="p">[</span><span class="n">col_to_del</span> <span class="ow">in</span> <span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span>
+    <span class="n">drop_col</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">drop_mask</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">drop_col</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+    
+    <span class="c1">#our index is broken, so we fix..</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">df</span></div>
+    
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="string_to_num"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.string_to_num">[docs]</a><span class="k">def</span> <span class="nf">string_to_num</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">cols</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;string_to_num - GDP and traffic flow correlations over time</span>
+<span class="sd">    </span>
+<span class="sd">    converts all values in a column from string to numerical values</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments: </span>
+<span class="sd">        df (DataFrame): data to convert to string</span>
+<span class="sd">        cols (list): list of columns in df for conversion</span>
+<span class="sd">    </span>
+<span class="sd">    Return:</span>
+<span class="sd">        df (DataFrame): now with specified columns as a string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#each of the chosen columns in df...</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
+        <span class="c1">#...format and change their type to numeric</span>
+        <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">is_string_dtype</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]):</span>
+            <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span>  <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;\D+&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
+    
+    <span class="k">return</span> <span class="n">df</span></div>
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="load_all_traffic_data"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.load_all_traffic_data">[docs]</a><span class="k">def</span> <span class="nf">load_all_traffic_data</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> 
+                          <span class="n">load_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;road&quot;</span><span class="p">,</span> <span class="s2">&quot;rcat&quot;</span><span class="p">],</span>
+                          <span class="n">regex</span> <span class="o">=</span> <span class="s2">&quot;.*traffic_gdp_[0-9]&quot;</span><span class="p">,</span>
+                          <span class="n">ext</span> <span class="o">=</span> <span class="s2">&quot;csv&quot;</span>
+                         <span class="p">):</span>
+    
+    <span class="n">files</span> <span class="o">=</span> <span class="n">files_looks_like</span><span class="p">(</span><span class="n">loc</span> <span class="o">=</span> <span class="n">loc</span><span class="p">,</span> <span class="n">looks_like</span> <span class="o">=</span> <span class="n">regex</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">ext</span><span class="p">)</span>
+
+    <span class="n">df_lst</span> <span class="o">=</span> <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">usecols</span> <span class="o">=</span> <span class="n">load_columns</span><span class="p">)</span> 
+              <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span>
+             <span class="p">]</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">df_lst</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">df</span></div>
+    
+<span class="c1">#%%</span>
+   
+<div class="viewcode-block" id="get_growth"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.get_growth">[docs]</a><span class="k">def</span> <span class="nf">get_growth</span><span class="p">(</span><span class="n">df</span><span class="p">,</span>
+               <span class="n">area_col</span><span class="p">,</span>
+               <span class="n">gdp_col</span><span class="p">,</span>
+               <span class="n">messages</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+               <span class="n">time_col</span> <span class="o">=</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span>
+               <span class="n">ratio_col</span> <span class="o">=</span> <span class="s2">&quot;gdp_ratio&quot;</span><span class="p">,</span>
+               <span class="n">growth_col</span> <span class="o">=</span> <span class="s2">&quot;growth&quot;</span>
+               <span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;get_growth</span>
+<span class="sd">    </span>
+<span class="sd">    Calculates gdp growth for this year&#39;s figure based on the previous year.</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        df (Dataframe): GDP data by nuts region.</span>
+<span class="sd">        area_col (string): column in df where the nuts area name is stored</span>
+<span class="sd">        gdp_col (string): Column in df where the gdp value is stored</span>
+<span class="sd">        messages (bool): Print out messages?</span>
+<span class="sd">        time_col (string): Column in df giving the year of the gdp figure.</span>
+<span class="sd">        ratio_col (string): Column in df  to store the gdp ratio from the </span>
+<span class="sd">            previous year.</span>
+<span class="sd">        growth_col (string): Column in df to store the gdp growth from the </span>
+<span class="sd">            previous year.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns: </span>
+<span class="sd">        df (DataFrame): As passed, except with two new columns named as string</span>
+<span class="sd">            in ratio_col and growth col with gdp ratio and gdp growth for that</span>
+<span class="sd">            region based on last year</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">gdp_ratio</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">growth</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span><span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+        
+        <span class="n">prev_year</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">time_col</span><span class="p">]</span> <span class="o">-</span> <span class="n">relativedelta</span><span class="p">(</span><span class="n">years</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">area_col</span><span class="p">]</span> <span class="o">==</span> <span class="n">row</span><span class="p">[</span><span class="n">area_col</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">time_col</span><span class="p">]</span> <span class="o">==</span> <span class="n">prev_year</span><span class="p">)</span>
+        
+        <span class="c1">#is there any previous year&#39;s data for this region we can look at?</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">][</span><span class="n">gdp_col</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="c1">#if there isn&#39;t any, we can&#39;t calc growth figures</span>
+            <span class="n">gdp_ratio</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="n">growth</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">#calc growth figures</span>
+            <span class="n">prev_gdp</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">][</span><span class="n">gdp_col</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">ratio</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">gdp_col</span><span class="p">]</span><span class="o">/</span><span class="n">prev_gdp</span>
+            <span class="n">gdp_ratio</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ratio</span><span class="p">)</span>
+            <span class="n">growth</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ratio</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span> <span class="c1"># % growth rate</span>
+            
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> 
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;prev_gdp: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">prev_gdp</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;gdp ratio: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">gdp_ratio</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;growth rate: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">growth</span><span class="p">)</span>
+
+    <span class="n">df</span><span class="p">[</span><span class="n">ratio_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdp_ratio</span>
+    <span class="n">df</span><span class="p">[</span><span class="n">growth_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">growth</span>
+    
+    <span class="k">return</span> <span class="n">df</span></div>
+    
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="load_stats"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.load_stats">[docs]</a><span class="k">def</span> <span class="nf">load_stats</span><span class="p">(</span><span class="n">loc</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/working/data/&quot;</span><span class="p">,</span>
+               <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;traffic_stats.csv&quot;</span><span class="p">,</span>
+               <span class="n">year_col</span> <span class="o">=</span> <span class="s2">&quot;year&quot;</span><span class="p">,</span>
+               <span class="n">year_label_col</span> <span class="o">=</span> <span class="s2">&quot;year_label&quot;</span>
+               <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;load_stats</span>
+<span class="sd">    </span>
+<span class="sd">    loads the .csv file with descriptive statistics by nuts region </span>
+<span class="sd">    and nationally</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        loc (string): path to where the file is stored        </span>
+<span class="sd">        file (string): name of the file</span>
+<span class="sd">        year_col (string): column in df that contains year the data was </span>
+<span class="sd">            collected</span>
+<span class="sd">        year_label_col (string); Column in df where the year is shown as an</span>
+<span class="sd">            integer, useful for plotting.</span>
+<span class="sd">    Returns: </span>
+<span class="sd">        df (Dataframe): Contains the descriptive statistics </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">loc</span> <span class="o">+</span> <span class="n">name</span><span class="p">)</span>
+    
+    <span class="c1">#format year</span>
+    <span class="n">df</span><span class="p">[</span><span class="n">year_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">year_col</span><span class="p">],</span> <span class="nb">format</span> <span class="o">=</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1">#int for plotting</span>
+    
+    <span class="n">df</span><span class="p">[</span><span class="n">year_label_col</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">year</span><span class="p">)</span> <span class="k">for</span> <span class="n">date</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">year_col</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="unmelt_by_col"><a class="viewcode-back" href="../dataset_processing.html#dataset_processing.unmelt_by_col">[docs]</a><span class="k">def</span> <span class="nf">unmelt_by_col</span><span class="p">(</span><span class="n">df</span><span class="p">,</span>
+                  <span class="n">key_col</span><span class="p">,</span>
+                  <span class="n">value_cols</span><span class="p">,</span>
+                  <span class="n">validation</span> <span class="o">=</span> <span class="s2">&quot;one_to_one&quot;</span><span class="p">,</span>
+                  <span class="n">messages</span> <span class="o">=</span> <span class="kc">False</span> 
+                 <span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;unmelt_by_col</span>
+<span class="sd">    </span>
+<span class="sd">    Takes a dataframe in tall format with a key column and multiple value </span>
+<span class="sd">    columns and turns it into wide format.</span>
+<span class="sd">    All other columns not in key_col or value_col are assumed to be index</span>
+<span class="sd">    columns</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        df (DataFrame): data in tall format</span>
+<span class="sd">        key_col (string); column in df that stores the keys</span>
+<span class="sd">        value_cols (list): columns in df that contain the values</span>
+<span class="sd">        validation (string): validation to perfom on the unmelted data; check</span>
+<span class="sd">            pandas documentation for mergeing for details or set this as None</span>
+<span class="sd">            to avoid. </span>
+<span class="sd">        messages (bool): print messages, useful for debugging</span>
+<span class="sd">            </span>
+<span class="sd">    Returns: </span>
+<span class="sd">        unmelted_df (DataFrame): df in wide format</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#the unique keyd we want to unmelt by</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">key_col</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+
+    <span class="c1">#get the first data frame containing only the first key value</span>
+    <span class="n">unmelted_df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">key_col</span><span class="p">]</span> <span class="o">==</span> <span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+
+    <span class="c1">#now get each other dataframe containing only each key value to merge   </span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;item: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">item</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;item by index : </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">items</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;index: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">index</span><span class="p">)</span>
+        <span class="c1">#subset the data</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">key_col</span><span class="p">]</span> <span class="o">==</span> <span class="n">item</span>
+        <span class="c1">#merge this subset with the rest</span>
+        <span class="n">unmelted_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span> <span class="o">=</span> <span class="n">unmelted_df</span><span class="p">,</span> 
+                               <span class="n">right</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span>
+                               <span class="n">how</span> <span class="o">=</span> <span class="s2">&quot;outer&quot;</span><span class="p">,</span>
+                               <span class="n">on</span> <span class="o">=</span> <span class="n">value_cols</span><span class="p">,</span>
+                               <span class="n">suffixes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="n">items</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
+                                           <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="n">item</span>
+                                           <span class="p">],</span>
+                               <span class="n">validate</span> <span class="o">=</span> <span class="n">validation</span>
+                              <span class="p">)</span>
+    <span class="k">return</span> <span class="n">unmelted_df</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Edward Rowland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

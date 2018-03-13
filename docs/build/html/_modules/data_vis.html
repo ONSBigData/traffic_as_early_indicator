@@ -1,0 +1,782 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>data_vis &#8212; traffic_gdp_report 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for data_vis</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Fri Jan 19 13:53:57 2018</span>
+
+<span class="sd">@author: eddr</span>
+
+<span class="sd">This module contains code to create Bokeh visualisations in python from </span>
+<span class="sd">the traffic flow and GDP data. </span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">statsmodels.api</span> <span class="k">as</span> <span class="nn">sm</span>
+
+
+
+<span class="c1">#plotting</span>
+<span class="kn">from</span> <span class="nn">bokeh.plotting</span> <span class="k">import</span> <span class="n">figure</span>
+<span class="kn">from</span> <span class="nn">bokeh.models</span> <span class="k">import</span> <span class="n">ColumnDataSource</span><span class="p">,</span>  <span class="n">Label</span><span class="p">,</span> <span class="n">LinearAxis</span><span class="p">,</span> <span class="n">Title</span>
+<span class="kn">from</span> <span class="nn">bokeh.models.widgets</span> <span class="k">import</span> <span class="n">Panel</span><span class="p">,</span> <span class="n">Tabs</span>
+<span class="kn">from</span> <span class="nn">bokeh.layouts</span> <span class="k">import</span> <span class="n">gridplot</span>
+<span class="kn">from</span> <span class="nn">bokeh.palettes</span> <span class="k">import</span> <span class="n">Category10</span>
+
+<span class="c1">#stats</span>
+<span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="k">import</span> <span class="n">correlate</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="k">import</span> <span class="n">linregress</span>
+
+<span class="c1">#where our scripts are stored</span>
+<span class="n">file_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file_dir</span><span class="p">)</span> <span class="c1"># assume other scripts are where we are</span>
+
+
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="multiline_plot"><a class="viewcode-back" href="../data_vis.html#data_vis.multiline_plot">[docs]</a><span class="k">def</span> <span class="nf">multiline_plot</span><span class="p">(</span><span class="n">src</span><span class="p">,</span>
+                   <span class="n">key_names</span><span class="p">,</span>
+                   <span class="n">title</span><span class="p">,</span>
+                   <span class="n">x_label</span><span class="p">,</span>
+                   <span class="n">y_label</span><span class="p">,</span>
+                   <span class="n">x_feature</span><span class="p">,</span>
+                   <span class="n">data_cols</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="n">colours</span> <span class="o">=</span> <span class="n">Category10</span><span class="p">,</span>
+                   <span class="n">bold_col</span> <span class="o">=</span> <span class="s2">&quot;red&quot;</span><span class="p">,</span>
+                   <span class="n">bold_thick</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">,</span>
+                   <span class="n">bold_feature</span> <span class="o">=</span> <span class="s2">&quot;gdp_growth&quot;</span><span class="p">,</span>
+                   <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span>
+                   <span class="n">tb_loc</span> <span class="o">=</span> <span class="s2">&quot;above&quot;</span><span class="p">,</span>
+                   <span class="n">plot_width</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+                   <span class="n">plot_height</span> <span class="o">=</span> <span class="mi">750</span><span class="p">,</span>
+                   <span class="n">leg_loc</span> <span class="o">=</span> <span class="s2">&quot;bottom_right&quot;</span><span class="p">,</span>
+                   <span class="n">font_size</span> <span class="o">=</span> <span class="s2">&quot;8pt&quot;</span><span class="p">,</span>
+                   <span class="n">messages</span> <span class="o">=</span> <span class="kc">True</span>
+                  <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;multiline_plot</span>
+<span class="sd">    </span>
+<span class="sd">    Creates a bokeh plot with multiple data series&#39; plotted as a line. One </span>
+<span class="sd">    of these data series can be selected to be of a particular colour and </span>
+<span class="sd">    thickness, useful for highlighting one particular data series. It is also</span>
+<span class="sd">    possible to show/hide particular series by clicking on its entry in the </span>
+<span class="sd">    legend</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        src (ColumnDataSource): contains data to plot</span>
+<span class="sd">        data_cols (list): columns in src containing data to plot, if not </span>
+<span class="sd">            passed, it plots all columns </span>
+<span class="sd">        title (string): Title of the plot</span>
+<span class="sd">        x_label (string): x axis label</span>
+<span class="sd">        y_label (string): y axis label</span>
+<span class="sd">        x_feature (string):column containing the year the data corrisponds to</span>
+<span class="sd">        data_cols (list): the columns containing data to plot</span>
+<span class="sd">        colours (Palette): Colour palette to use when plotting</span>
+<span class="sd">        bold_col (string): Colour for the highligted data series</span>
+<span class="sd">        bold_thick (numeric): Line thickness for the highlighted data series </span>
+<span class="sd">        bold_feature &quot;string&quot;: name of the column in src containing data to </span>
+<span class="sd">            highlight</span>
+<span class="sd">        alpha (numeric): alpha (transparency) of the plotted lines</span>
+<span class="sd">        tb_loc (sting): tool bar location </span>
+<span class="sd">            see: https://bokeh.pydata.org/en/latest/docs/user_guide/tools.html</span>
+<span class="sd">        plot_width (numeric): plot size</span>
+<span class="sd">        plot_height (numeric): plot size</span>
+<span class="sd">        leg_loc (&quot;string&quot;): location of the legend </span>
+<span class="sd">            see: https://bokeh.pydata.org/en/latest/docs/user_guide/styling.html#legends</span>
+<span class="sd">        font_size (string): size of font of the axis label text</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        plot (bokeh figure): the figure created</span>
+<span class="sd">        </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># plot all the columns if data_cols not passed</span>
+    <span class="k">if</span> <span class="n">data_cols</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">data_cols</span> <span class="o">=</span>  <span class="n">src</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> 
+    <span class="c1">#as no key names have been specified</span>
+    <span class="k">if</span> <span class="n">key_names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">key_names</span> <span class="o">=</span> <span class="n">data_cols</span>
+    
+    <span class="c1">#create the bokeh plot</span>
+    <span class="n">plot</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">title</span> <span class="o">=</span>  <span class="n">title</span><span class="p">,</span>
+                  <span class="n">x_axis_label</span> <span class="o">=</span> <span class="n">x_label</span><span class="p">,</span>
+                  <span class="n">y_axis_label</span> <span class="o">=</span> <span class="n">y_label</span><span class="p">,</span>
+                  <span class="n">toolbar_location</span> <span class="o">=</span> <span class="n">tb_loc</span><span class="p">,</span>
+                  <span class="n">plot_width</span> <span class="o">=</span> <span class="n">plot_width</span> <span class="p">,</span> 
+                  <span class="n">plot_height</span> <span class="o">=</span> <span class="n">plot_height</span>
+                  <span class="p">)</span>
+    
+    <span class="c1">#plot the data</span>
+    <span class="k">for</span> <span class="n">item</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">data_cols</span><span class="p">,</span> 
+                              <span class="n">key_names</span><span class="p">,</span>
+                              <span class="n">colours</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">data_cols</span><span class="p">)]</span>
+                             <span class="p">):</span>
+        <span class="c1">#is this a feature we plot with a thicker red line?</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="n">bold_feature</span><span class="p">:</span>
+            <span class="n">plot</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">x_feature</span><span class="p">,</span> 
+                      <span class="n">item</span><span class="p">,</span> 
+                      <span class="n">line_color</span> <span class="o">=</span> <span class="n">bold_col</span><span class="p">,</span>
+                      <span class="n">line_width</span> <span class="o">=</span> <span class="n">bold_thick</span><span class="p">,</span>
+                      <span class="n">legend</span> <span class="o">=</span> <span class="n">key</span><span class="p">,</span>
+                      <span class="n">source</span> <span class="o">=</span> <span class="n">src</span>
+                     <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">plot</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">x_feature</span><span class="p">,</span>
+                      <span class="n">item</span><span class="p">,</span>
+                      <span class="n">line_color</span> <span class="o">=</span> <span class="n">col</span><span class="p">,</span>
+                      <span class="n">source</span> <span class="o">=</span> <span class="n">src</span><span class="p">,</span>
+                      <span class="n">legend</span> <span class="o">=</span> <span class="n">key</span><span class="p">,</span>
+                      <span class="n">line_alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+                     <span class="p">)</span>
+            
+    <span class="c1">#make sure all the ticks are labeled</span>
+    <span class="n">n_ticks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">xaxis</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ticker</span><span class="o">.</span><span class="n">desired_num_ticks</span> <span class="o">=</span> <span class="n">n_ticks</span>
+    
+    <span class="c1">#legend setup</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">legend</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">leg_loc</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">legend</span><span class="o">.</span><span class="n">click_policy</span> <span class="o">=</span> <span class="s2">&quot;hide&quot;</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">legend</span><span class="o">.</span><span class="n">label_text_font_size</span> <span class="o">=</span> <span class="n">font_size</span> 
+        
+    <span class="k">return</span> <span class="n">plot</span></div>
+                
+<span class="c1">#%%</span>
+    
+<div class="viewcode-block" id="cross_correlation_charts"><a class="viewcode-back" href="../data_vis.html#data_vis.cross_correlation_charts">[docs]</a><span class="k">def</span> <span class="nf">cross_correlation_charts</span><span class="p">(</span><span class="n">df</span><span class="p">,</span>
+                             <span class="n">data_cols</span><span class="p">,</span> 
+                             <span class="n">key_names</span><span class="p">,</span>
+                             <span class="n">colour</span> <span class="o">=</span> <span class="n">Category10</span><span class="p">,</span>
+                             <span class="n">corr_col</span> <span class="o">=</span> <span class="s2">&quot;gdp_growth&quot;</span><span class="p">,</span>
+                             <span class="n">x_label</span> <span class="o">=</span> <span class="s2">&quot;Lag (years)&quot;</span><span class="p">,</span>
+                             <span class="n">y_label</span> <span class="o">=</span> <span class="s2">&quot;Signal overlap&quot;</span><span class="p">,</span>
+                             <span class="n">tb_loc</span> <span class="o">=</span> <span class="s2">&quot;right&quot;</span><span class="p">,</span>
+                             <span class="n">plot_x</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+                             <span class="n">plot_y</span> <span class="o">=</span> <span class="mi">400</span><span class="p">,</span>
+                             <span class="n">lag_line_col</span> <span class="o">=</span> <span class="s2">&quot;black&quot;</span><span class="p">,</span>
+                             <span class="n">lag_line_alpha</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span>
+                             <span class="n">lag_line_dash</span> <span class="o">=</span> <span class="s2">&quot;dashed&quot;</span>
+                            <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;cross_correlation_charts</span>
+<span class="sd">    </span>
+<span class="sd">    Creates a tabbed bokeh plot with multiple data series&#39; cross correlation</span>
+<span class="sd">    function with a single other series with a line and label on the chart</span>
+<span class="sd">    that gives the lag with the highest signal overlap.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        df (DataFrame): contains data to plot</span>
+<span class="sd">        data_cols (list): columns in src containing data to plot, if not </span>
+<span class="sd">            passed, it plots all columns </span>
+<span class="sd">        key_names (List): more readable names for data_cols, if not passed</span>
+<span class="sd">            data_cols is used</span>
+<span class="sd">        x_label (string): x axis label</span>
+<span class="sd">        y_label (string): y axis label</span>
+<span class="sd">        cor_col (string): column in df containing data series to cross </span>
+<span class="sd">            correlate with data columns in data_col</span>
+<span class="sd">        colours (Palette): Colour palette to use when plotting</span>
+<span class="sd">        lag_line_col (string): Colour for the line indicating lag with max</span>
+<span class="sd">            overlap</span>
+<span class="sd">        lag_line_alpha (numeric): alpha (transparency) of the lag line</span>
+<span class="sd">        tb_loc (sting): tool bar location </span>
+<span class="sd">        lag_line_dash (string): Dash pattern for the line indicating lag with </span>
+<span class="sd">            max overlap</span>
+<span class="sd">            see: https://bokeh.pydata.org/en/latest/docs/user_guide/styling.html#line-properties</span>
+<span class="sd">        plot_x (numeric): plot width in pixes on screen</span>
+<span class="sd">        plot_y (numeric): plot height in pixes on screen</span>
+
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        (bokeh Tabs): Widget containing the plotted charts</span>
+<span class="sd">        </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1"># plot all the columns if data_cols not passed</span>
+    <span class="k">if</span> <span class="n">data_cols</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">data_cols</span> <span class="o">=</span>  <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> 
+    <span class="c1">#as no key names have been specified</span>
+    <span class="k">if</span> <span class="n">key_names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">key_names</span> <span class="o">=</span> <span class="n">data_cols</span>
+    
+    <span class="c1">#remove the one column we are correlating everything else with</span>
+    <span class="n">feat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> 
+                 <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                 <span class="k">if</span> <span class="n">col</span> <span class="o">!=</span> <span class="n">corr_col</span>
+                <span class="p">]</span>
+    <span class="n">lags</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">),</span>
+                             <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+                            <span class="p">)]</span>
+    
+    <span class="n">plot_lst</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">colour</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">feat_cols</span><span class="p">,</span> <span class="n">colour</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">feat_cols</span><span class="p">)],</span> <span class="n">key_names</span><span class="p">):</span>
+        
+        <span class="c1">#compute cross_correlation</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">correlate</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">corr_col</span><span class="p">],</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
+    
+        <span class="c1">#create line indicating lag</span>
+        <span class="n">max_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">max_overlap</span> <span class="o">=</span> <span class="n">lags</span><span class="p">[</span><span class="n">max_index</span><span class="p">]</span>
+        <span class="n">max_line_y</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">y</span><span class="p">)))]</span>
+        <span class="n">max_line_x</span> <span class="o">=</span> <span class="p">[</span><span class="n">max_overlap</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">max_line_y</span><span class="p">)</span>
+        
+        <span class="c1">#create figure</span>
+        <span class="n">plot_title</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;GDP growth and &quot;</span> 
+                      <span class="o">+</span> <span class="n">name</span> 
+                      <span class="o">+</span> <span class="s2">&quot; mean flow cross-correlation&quot;</span>
+                     <span class="p">)</span>
+                
+        <span class="n">p</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">title</span> <span class="o">=</span> <span class="n">plot_title</span><span class="p">,</span>
+                   <span class="n">x_axis_label</span> <span class="o">=</span> <span class="n">x_label</span><span class="p">,</span>
+                   <span class="n">y_axis_label</span> <span class="o">=</span> <span class="n">y_label</span><span class="p">,</span>
+                   <span class="n">toolbar_location</span> <span class="o">=</span> <span class="n">tb_loc</span><span class="p">,</span>
+                   <span class="n">plot_width</span> <span class="o">=</span> <span class="n">plot_x</span><span class="p">,</span> 
+                   <span class="n">plot_height</span> <span class="o">=</span> <span class="n">plot_y</span>
+                  <span class="p">)</span>
+        
+        <span class="c1">#plot crosscorelation function</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">lags</span><span class="p">,</span> 
+               <span class="n">y</span><span class="p">,</span>
+               <span class="n">line_color</span> <span class="o">=</span> <span class="n">colour</span><span class="p">,</span>
+               <span class="n">line_width</span> <span class="o">=</span> <span class="mi">2</span>
+              <span class="p">)</span>
+        
+        <span class="c1">#indicate max lag</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">max_line_x</span><span class="p">,</span>
+               <span class="n">max_line_y</span><span class="p">,</span>
+               <span class="n">line_color</span> <span class="o">=</span> <span class="n">lag_line_col</span><span class="p">,</span>
+               <span class="n">line_alpha</span> <span class="o">=</span> <span class="n">lag_line_alpha</span><span class="p">,</span>
+               <span class="n">line_dash</span> <span class="o">=</span> <span class="n">lag_line_dash</span>
+               <span class="p">)</span>
+        
+        <span class="n">label_text</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Max overlap at lag of </span><span class="si">%s</span><span class="s2"> years&quot;</span>  <span class="o">%</span><span class="n">max_overlap</span><span class="p">)</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">Label</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+                      <span class="n">y</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+                      <span class="n">x_units</span><span class="o">=</span><span class="s1">&#39;screen&#39;</span><span class="p">,</span>
+                      <span class="n">text</span> <span class="o">=</span>  <span class="n">label_text</span><span class="p">,</span>
+                      <span class="n">text_font_size</span> <span class="o">=</span> <span class="s2">&quot;8pt&quot;</span><span class="p">,</span>
+                      <span class="n">render_mode</span><span class="o">=</span><span class="s1">&#39;css&#39;</span><span class="p">,</span>
+                      <span class="n">border_line_color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span>
+                      <span class="n">border_line_alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+                      <span class="n">background_fill_color</span> <span class="o">=</span> <span class="s1">&#39;white&#39;</span>
+                     <span class="p">)</span>
+        <span class="c1">#create tabbed plots</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">add_layout</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+        <span class="n">tab</span> <span class="o">=</span> <span class="n">Panel</span><span class="p">(</span><span class="n">child</span> <span class="o">=</span> <span class="n">p</span><span class="p">,</span> <span class="n">title</span> <span class="o">=</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">plot_lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tab</span><span class="p">)</span>   
+        
+    <span class="c1">#put together and show the plots</span>
+    <span class="k">return</span> <span class="n">Tabs</span><span class="p">(</span><span class="n">tabs</span> <span class="o">=</span> <span class="n">plot_lst</span><span class="p">)</span></div>
+    
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="get_pdf"><a class="viewcode-back" href="../data_vis.html#data_vis.get_pdf">[docs]</a><span class="k">def</span> <span class="nf">get_pdf</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;get_pdf</span>
+<span class="sd">    </span>
+<span class="sd">    Compute the pdf of a data series</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        data (DataFrame)</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        pdf (array): The probablity density function</span>
+<span class="sd">        kde.support (array): for plotting </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#format data</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+    <span class="c1">#get kde</span>
+    <span class="n">kde</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">nonparametric</span><span class="o">.</span><span class="n">KDEUnivariate</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">kde</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+    <span class="n">counts</span><span class="p">,</span> <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">pdf</span> <span class="o">=</span> <span class="p">(</span><span class="n">kde</span><span class="o">.</span><span class="n">density</span><span class="o">/</span><span class="n">kde</span><span class="o">.</span><span class="n">density</span><span class="o">.</span><span class="n">max</span><span class="p">())</span><span class="o">*</span><span class="nb">max</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">pdf</span><span class="p">,</span> <span class="n">kde</span><span class="o">.</span><span class="n">support</span></div>
+
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="pdf_plot"><a class="viewcode-back" href="../data_vis.html#data_vis.pdf_plot">[docs]</a><span class="k">def</span> <span class="nf">pdf_plot</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> 
+             <span class="n">feature</span><span class="p">,</span>
+             <span class="n">plot</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">x_suffix</span> <span class="o">=</span> <span class="s2">&quot;_support&quot;</span><span class="p">,</span>
+             <span class="n">y_suffix</span> <span class="o">=</span> <span class="s2">&quot;_density&quot;</span><span class="p">,</span>
+             <span class="n">plot_size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">600</span><span class="p">,</span><span class="mi">150</span><span class="p">),</span>
+             <span class="n">axis_swap</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+             <span class="n">logo</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+             <span class="n">toolbar</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;pdf_plot</span>
+<span class="sd">    </span>
+<span class="sd">    Creates a probablity density plot to be show with a scatter plot in</span>
+<span class="sd">    the joint_plot function</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        src (ColumnDataSource): we create the plot from the data here</span>
+<span class="sd">        feature (string): the feature in src to plot</span>
+<span class="sd">        plot (Figure): bokeh figure to create the plot with, will create</span>
+<span class="sd">            our own if this is None.</span>
+<span class="sd">        x_suffix (string): suffix to append to feature to indicate the column </span>
+<span class="sd">            in src of the values to plot on the x axis</span>
+<span class="sd">        x_suffix (string): suffix to append to feature to indicate the column </span>
+<span class="sd">            in src of the values to plot on the x axis</span>
+<span class="sd">        plot_size (List like): width and height of the plot</span>
+<span class="sd">        axis_swap (bool): When set to True, swap the axes, so x becomes y</span>
+<span class="sd">            and y becomes x</span>
+<span class="sd">        logo (bool): Display the Bokeh logo or not</span>
+<span class="sd">        toolbar (bool): </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        plot (Figure): Bokeh Figure of the pdf for the feature indicated by </span>
+<span class="sd">            feature in the source data, src</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#switch the axis</span>
+    <span class="k">if</span> <span class="n">axis_swap</span><span class="p">:</span>
+        <span class="n">swap</span> <span class="o">=</span> <span class="n">y_suffix</span>
+        <span class="n">y_suffix</span> <span class="o">=</span> <span class="n">x_suffix</span>
+        <span class="n">x_suffix</span> <span class="o">=</span> <span class="n">swap</span>
+    
+    <span class="c1">#create our own plot if we don&#39;t have one    </span>
+    <span class="k">if</span> <span class="n">plot</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>    
+        <span class="n">plot</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">plot_width</span> <span class="o">=</span> <span class="n">plot_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                      <span class="n">plot_height</span> <span class="o">=</span> <span class="n">plot_size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    
+    <span class="c1">#plot the pdf    </span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">feature</span> <span class="o">+</span> <span class="n">x_suffix</span><span class="p">,</span> 
+              <span class="n">y</span> <span class="o">=</span> <span class="n">feature</span> <span class="o">+</span> <span class="n">y_suffix</span><span class="p">,</span>
+              <span class="n">source</span> <span class="o">=</span> <span class="n">src</span>
+             <span class="p">)</span>
+    <span class="c1">#set some plot options         </span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">axis</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">outline_line_color</span> <span class="o">=</span> <span class="kc">None</span>
+    
+    <span class="n">plot</span><span class="o">.</span><span class="n">toolbar</span><span class="o">.</span><span class="n">logo</span> <span class="o">=</span> <span class="n">logo</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">toolbar_location</span> <span class="o">=</span> <span class="n">toolbar</span>
+    
+    <span class="k">return</span> <span class="n">plot</span>   </div>
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="plot_scatter"><a class="viewcode-back" href="../data_vis.html#data_vis.plot_scatter">[docs]</a><span class="k">def</span> <span class="nf">plot_scatter</span><span class="p">(</span><span class="n">src</span><span class="p">,</span>
+                 <span class="n">x_feature</span><span class="p">,</span>
+                 <span class="n">y_feature</span><span class="p">,</span>
+                 <span class="n">x_label</span><span class="p">,</span>
+                 <span class="n">y_label</span><span class="p">,</span>
+                 <span class="n">plot</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">plot_size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">600</span><span class="p">,</span><span class="mi">450</span><span class="p">),</span>
+                 <span class="n">fit_line</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">fit_line_col</span> <span class="o">=</span> <span class="s2">&quot;black&quot;</span><span class="p">,</span>
+                 <span class="n">logo</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">toolbar</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;scatter_plot</span>
+<span class="sd">    </span>
+<span class="sd">    Creates a scatter plot to be show with probablity density function plots in</span>
+<span class="sd">    the joint_plot function</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        src (ColumnDataSource): we create the plot from the data here</span>
+<span class="sd">        y_feature (string): the feature in src to plot on the x axis</span>
+<span class="sd">        y_feature (string): the feature in src to plot on the y axis</span>
+<span class="sd">        x_label (string): Label for the x axis</span>
+<span class="sd">        y_label (string): Label for the y axis</span>
+<span class="sd">        plot (Figure): bokeh figure to create the plot with, will create</span>
+<span class="sd">            our own if this is None.</span>
+<span class="sd">        plot_size (List like): width and height of the plot</span>
+<span class="sd">        fit_line (bool): Plot a linear least squares line of best fit</span>
+<span class="sd">        fit_line_col: (string): colour of the line of best fit,</span>
+<span class="sd">        logo (bool): Display the Bokeh logo or not</span>
+<span class="sd">        toolbar (bool): </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        plot (Figure): Bokeh Figure showing a scatter plot for two features</span>
+<span class="sd">            in the source data, src</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#create our own plot if we don&#39;t have one   </span>
+    <span class="k">if</span> <span class="n">plot</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>    
+        <span class="n">plot</span> <span class="o">=</span> <span class="n">figure</span><span class="p">(</span><span class="n">x_axis_label</span> <span class="o">=</span> <span class="n">x_label</span><span class="p">,</span>
+                      <span class="n">y_axis_label</span> <span class="o">=</span> <span class="n">y_label</span><span class="p">,</span>
+                      <span class="n">plot_width</span> <span class="o">=</span> <span class="n">plot_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                      <span class="n">plot_height</span> <span class="o">=</span> <span class="n">plot_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                     <span class="p">)</span>
+    <span class="c1">#get the best fit line and plot it</span>
+    <span class="k">if</span> <span class="n">fit_line</span><span class="p">:</span>    
+        <span class="n">line_src</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">lin_reg_line</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> 
+                                      <span class="n">x_feature</span><span class="p">,</span>
+                                      <span class="n">y_feature</span>
+                                    <span class="p">)</span>
+        <span class="n">plot</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="s2">&quot;x_vals&quot;</span><span class="p">,</span>
+                  <span class="n">y</span> <span class="o">=</span> <span class="s2">&quot;fit&quot;</span><span class="p">,</span>
+                  <span class="n">source</span> <span class="o">=</span> <span class="n">line_src</span><span class="p">,</span>
+                  <span class="n">line_color</span> <span class="o">=</span> <span class="n">fit_line_col</span><span class="p">,</span>
+                  <span class="n">line_alpha</span> <span class="o">=</span> <span class="mf">0.5</span>
+                 <span class="p">)</span>
+        
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        #for shading and error</span>
+<span class="sd">        ##get the data, sort_values to make sure patch is drawn as rectangle</span>
+<span class="sd">        line_df = line_src.to_df() </span>
+<span class="sd">        </span>
+<span class="sd">        band_y = np.append(line_df.sort_values(&quot;x_vals&quot;)[&quot;+_err&quot;], </span>
+<span class="sd">                           line_df.sort_values(by = &quot;x_vals&quot;,</span>
+<span class="sd">                                               ascending = False</span>
+<span class="sd">                                              )[&quot;-_err&quot;]</span>
+<span class="sd">                          )</span>
+<span class="sd">                          </span>
+<span class="sd">        band_x = np.append(line_df.sort_values(&quot;x_vals&quot;)[&quot;x_vals&quot;],</span>
+<span class="sd">                           line_df.sort_values(by = &quot;x_vals&quot;,</span>
+<span class="sd">                                               ascending = False</span>
+<span class="sd">                                              )[&quot;x_vals&quot;]</span>
+<span class="sd">                          )</span>
+<span class="sd">        </span>
+<span class="sd">        #and plot</span>
+<span class="sd">        plot.patch(band_x,</span>
+<span class="sd">                   band_y, </span>
+<span class="sd">                   color = &quot;grey&quot;,</span>
+<span class="sd">                   fill_alpha = 0.05,</span>
+<span class="sd">                   line_alpha = 0.5,</span>
+<span class="sd">                   line_dash = &quot;dotted&quot;</span>
+<span class="sd">                  )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+           
+        <span class="c1">#add in the correlation coeff and alpha level as text</span>
+        <span class="n">ann_text</span> <span class="o">=</span> <span class="s2">&quot;Pearson&#39;s coef: </span><span class="si">{0}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">p-value: </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">r</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span>
+                                                               <span class="nb">round</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+                                                              <span class="p">)</span>
+
+        <span class="n">plot</span><span class="o">.</span><span class="n">add_layout</span><span class="p">(</span><span class="n">Title</span><span class="p">(</span><span class="n">text</span> <span class="o">=</span> <span class="n">ann_text</span><span class="p">,</span> <span class="n">align</span> <span class="o">=</span> <span class="s2">&quot;center&quot;</span><span class="p">),</span><span class="s2">&quot;below&quot;</span><span class="p">)</span>
+
+    <span class="c1">#data    </span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">circle</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="n">x_feature</span><span class="p">,</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">y_feature</span><span class="p">,</span>
+                <span class="n">source</span> <span class="o">=</span> <span class="n">src</span>
+               <span class="p">)</span>
+    
+    <span class="c1">#graph formatting</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">toolbar</span><span class="o">.</span><span class="n">logo</span> <span class="o">=</span> <span class="n">logo</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">toolbar_location</span> <span class="o">=</span> <span class="n">toolbar</span>
+    
+    <span class="n">plot</span><span class="o">.</span><span class="n">extra_x_ranges</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;top_joint_axis&#39;</span><span class="p">:</span> <span class="n">plot</span><span class="o">.</span><span class="n">x_range</span><span class="p">}</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">add_layout</span><span class="p">(</span><span class="n">LinearAxis</span><span class="p">(</span><span class="n">x_range_name</span><span class="o">=</span><span class="s1">&#39;top_joint_axis&#39;</span><span class="p">),</span> <span class="s1">&#39;above&#39;</span><span class="p">)</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">extra_y_ranges</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;right_joint_axis&#39;</span><span class="p">:</span> <span class="n">plot</span><span class="o">.</span><span class="n">y_range</span><span class="p">}</span>   
+    <span class="n">plot</span><span class="o">.</span><span class="n">add_layout</span><span class="p">(</span><span class="n">LinearAxis</span><span class="p">(</span><span class="n">y_range_name</span><span class="o">=</span><span class="s1">&#39;right_joint_axis&#39;</span><span class="p">),</span> <span class="s1">&#39;right&#39;</span><span class="p">)</span>
+    
+
+    
+    <span class="k">return</span> <span class="n">plot</span></div>
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="frange"><a class="viewcode-back" href="../data_vis.html#data_vis.frange">[docs]</a><span class="k">def</span> <span class="nf">frange</span><span class="p">(</span><span class="n">start</span><span class="p">,</span><span class="n">stop</span><span class="p">,</span><span class="n">step</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;frange</span>
+<span class="sd">    </span>
+<span class="sd">    generator that starts at a number, increase by an increment until the </span>
+<span class="sd">    number it yields exceeds a limit</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        start (numeric): The number we start at</span>
+<span class="sd">        stop (numeric): Stop yeilding when we exceed this</span>
+<span class="sd">        step (numeric): The increment</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">start</span>
+    
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">stop</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">i</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="n">step</span></div>
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="lin_reg_line"><a class="viewcode-back" href="../data_vis.html#data_vis.lin_reg_line">[docs]</a><span class="k">def</span> <span class="nf">lin_reg_line</span><span class="p">(</span><span class="n">source</span><span class="p">,</span>
+                 <span class="n">x_feature</span><span class="p">,</span>
+                 <span class="n">y_feature</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;lin_reg_line</span>
+<span class="sd">    </span>
+<span class="sd">    Creates a linear regression line for plot_scatter</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        source (ColumnDataSource): Contains the data to fit</span>
+<span class="sd">        x_feature: feature on the x axis (IV)</span>
+<span class="sd">        y_feature: feature on the y axis (DV)</span>
+<span class="sd">        </span>
+<span class="sd">    returns: line_src (ColumnDataSource) contains fit, the fitted line </span>
+<span class="sd">        (predicted y values), +_err and -_err the + and - one standard error </span>
+<span class="sd">        lines and x_vals, the x value for each fitted value in fit </span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#dataframe makes this easier</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span>
+    
+    <span class="n">slope</span><span class="p">,</span> <span class="n">intercept</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">std_err</span> <span class="o">=</span> <span class="n">linregress</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">x_feature</span><span class="p">],</span> 
+                                                 <span class="n">df</span><span class="p">[</span><span class="n">y_feature</span><span class="p">]</span>
+                                                <span class="p">)</span>
+    <span class="n">x_vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">frange</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">x_feature</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">x_feature</span><span class="p">]),</span> <span class="mf">0.1</span><span class="p">)]</span>
+    
+    <span class="c1">#lines for plotting</span>
+    <span class="n">lse_line</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">*</span><span class="n">slope</span><span class="o">+</span><span class="n">intercept</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">x_feature</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span>
+    <span class="n">pos_err_line</span> <span class="o">=</span> <span class="p">[</span><span class="n">y</span> <span class="o">+</span> <span class="n">std_err</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">lse_line</span><span class="p">]</span>
+    <span class="n">neg_err_line</span> <span class="o">=</span> <span class="p">[</span><span class="n">y</span> <span class="o">-</span> <span class="n">std_err</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">lse_line</span><span class="p">]</span>
+    
+    <span class="c1">#turn into source for plotting</span>
+    <span class="n">line_src</span> <span class="o">=</span> <span class="n">ColumnDataSource</span><span class="p">({</span><span class="s2">&quot;fit&quot;</span> <span class="p">:</span> <span class="n">lse_line</span><span class="p">,</span>
+                                 <span class="s2">&quot;+_err&quot;</span> <span class="p">:</span> <span class="n">pos_err_line</span><span class="p">,</span>
+                                 <span class="s2">&quot;-_err&quot;</span> <span class="p">:</span> <span class="n">neg_err_line</span><span class="p">,</span>
+                                 <span class="s2">&quot;x_vals&quot;</span> <span class="p">:</span> <span class="n">df</span><span class="p">[</span><span class="n">x_feature</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                               <span class="p">})</span>
+    <span class="k">return</span> <span class="n">line_src</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">p</span></div>
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="joint_plot"><a class="viewcode-back" href="../data_vis.html#data_vis.joint_plot">[docs]</a><span class="k">def</span> <span class="nf">joint_plot</span><span class="p">(</span><span class="n">source_lst</span><span class="p">,</span> 
+               <span class="n">x_feature</span><span class="p">,</span> 
+               <span class="n">y_feature</span><span class="p">,</span>
+               <span class="n">x_label</span><span class="p">,</span>
+               <span class="n">y_label</span><span class="p">,</span>
+               <span class="n">plot_size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">800</span><span class="p">,</span><span class="mi">600</span><span class="p">),</span>
+               <span class="n">size_ratio</span> <span class="o">=</span> <span class="mf">0.85</span><span class="p">,</span>
+               <span class="n">fit_line</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+               <span class="n">logo</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+               <span class="n">toolbar</span> <span class="o">=</span> <span class="kc">None</span>
+              <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;joint_plot</span>
+<span class="sd">    </span>
+<span class="sd">    Creates a scatter plot to be show with probablity density function plots in</span>
+<span class="sd">    the joint_plot function</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        source_list (List): contains three ColumnDataSource object, the first</span>
+<span class="sd">            two are for the x and y pdf chart respectively, the third is for</span>
+<span class="sd">            the scatter plot.</span>
+<span class="sd">        x_feature (string): the feature in src to plot on the x axis</span>
+<span class="sd">        y_feature (string): the feature in src to plot on the y axis</span>
+<span class="sd">        x_label (string): Label for the x axis</span>
+<span class="sd">        y_label (string): Label for the y axis</span>
+<span class="sd">        plot_size (List like): width and height of the plot</span>
+<span class="sd">        plot_ratio (numeric): Relative size of scatter plot, larger the value</span>
+<span class="sd">            the bigger the scatter plot relative to the pdf plots. Values </span>
+<span class="sd">            between 0 - 1.</span>
+<span class="sd">        fit_line (bool): Plot a linear least squares line of best fit</span>
+<span class="sd">        logo (bool): Display the Bokeh logo or not</span>
+<span class="sd">        toolbar (bool): </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        joint_plot (Gridplot): Bokeh GridPlot object with the scatter and </span>
+<span class="sd">            pdf plots within it.</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#compute the sizes of the pdf and scatter plot</span>
+    <span class="n">pdf_size_ratio</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">size_ratio</span>
+    <span class="n">scatter_size</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">dim</span> <span class="o">*</span> <span class="n">size_ratio</span><span class="p">))</span>
+                         <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">plot_size</span>
+                        <span class="p">)</span>
+
+    <span class="n">x_pdf_size</span> <span class="o">=</span> <span class="p">(</span><span class="n">scatter_size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                  <span class="nb">int</span><span class="p">(</span><span class="n">plot_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">pdf_size_ratio</span><span class="p">)</span>
+                 <span class="p">)</span>
+
+    <span class="n">y_pdf_size</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">plot_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">pdf_size_ratio</span><span class="p">),</span>
+                  <span class="n">scatter_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                 <span class="p">)</span>
+
+    <span class="c1">#create the pdf plots</span>
+    <span class="n">y_pdf</span> <span class="o">=</span> <span class="n">pdf_plot</span><span class="p">(</span><span class="n">source_lst</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> 
+                     <span class="n">y_feature</span><span class="p">,</span>
+                     <span class="n">plot_size</span> <span class="o">=</span> <span class="n">y_pdf_size</span><span class="p">,</span>
+                     <span class="n">axis_swap</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="p">)</span>
+    <span class="n">x_pdf</span> <span class="o">=</span> <span class="n">pdf_plot</span><span class="p">(</span><span class="n">source_lst</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                     <span class="n">x_feature</span><span class="p">,</span>
+                     <span class="n">plot_size</span> <span class="o">=</span> <span class="n">x_pdf_size</span>
+                    <span class="p">)</span>
+    
+    <span class="c1">#create the scatter plot</span>
+    <span class="n">scatter</span> <span class="o">=</span> <span class="n">plot_scatter</span><span class="p">(</span><span class="n">source_lst</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                           <span class="n">x_feature</span> <span class="o">=</span> <span class="n">x_feature</span><span class="p">,</span>
+                           <span class="n">y_feature</span> <span class="o">=</span> <span class="n">y_feature</span><span class="p">,</span>
+                           <span class="n">x_label</span> <span class="o">=</span> <span class="n">x_label</span><span class="p">,</span>
+                           <span class="n">y_label</span> <span class="o">=</span> <span class="n">y_label</span><span class="p">,</span>
+                           <span class="n">plot_size</span> <span class="o">=</span> <span class="n">scatter_size</span><span class="p">,</span>
+                           <span class="n">fit_line</span> <span class="o">=</span> <span class="n">fit_line</span>
+                          <span class="p">)</span>
+    
+    <span class="c1">#remove/add logos and toolbars</span>
+    <span class="n">x_pdf</span><span class="o">.</span><span class="n">toolbar</span><span class="o">.</span><span class="n">logo</span> <span class="o">=</span> <span class="n">logo</span>
+    <span class="n">y_pdf</span><span class="o">.</span><span class="n">toolbar</span><span class="o">.</span><span class="n">logo</span> <span class="o">=</span> <span class="n">logo</span>
+    <span class="n">scatter</span><span class="o">.</span><span class="n">toolbar</span><span class="o">.</span><span class="n">logo</span> <span class="o">=</span> <span class="n">logo</span>
+    <span class="n">x_pdf</span><span class="o">.</span><span class="n">toolbar_location</span> <span class="o">=</span> <span class="n">toolbar</span>
+    <span class="n">y_pdf</span><span class="o">.</span><span class="n">toolbar_location</span> <span class="o">=</span> <span class="n">toolbar</span>
+    <span class="n">scatter</span><span class="o">.</span><span class="n">toolbar_location</span> <span class="o">=</span> <span class="n">toolbar</span>
+    
+    <span class="c1">#combine the plots together</span>
+    <span class="n">joint_plot</span> <span class="o">=</span> <span class="n">gridplot</span><span class="p">([</span><span class="n">x_pdf</span><span class="p">],</span>
+                          <span class="p">[</span><span class="n">scatter</span><span class="p">,</span> <span class="n">y_pdf</span><span class="p">]</span>
+                         <span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">joint_plot</span></div>
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="lag_gdp"><a class="viewcode-back" href="../data_vis.html#data_vis.lag_gdp">[docs]</a><span class="k">def</span> <span class="nf">lag_gdp</span><span class="p">(</span><span class="n">df</span><span class="p">,</span>
+            <span class="n">lag</span><span class="p">,</span>
+            <span class="n">year_col</span> <span class="o">=</span> <span class="s2">&quot;year_label&quot;</span><span class="p">,</span>
+            <span class="n">gdp_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;GDP Growth&quot;</span><span class="p">,</span> <span class="s2">&quot;gdp&quot;</span><span class="p">],</span>
+            <span class="n">area_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;area_name&quot;</span><span class="p">,</span> <span class="s2">&quot;area_level&quot;</span><span class="p">]</span>
+           <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;lag_gdp</span>
+<span class="sd">    </span>
+<span class="sd">    Lags the gdp data year</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        df (DataFrame): Contains the gdp and traffic data</span>
+<span class="sd">        lag (numeric): how many years to lag the gdp data</span>
+<span class="sd">        year_col (string): Column in df containing the year</span>
+<span class="sd">        gdp_cols (List): Columns in df containing gdp data</span>
+<span class="sd">        area_cols (List): Columns in df contain geographic data</span>
+<span class="sd">    </span>
+<span class="sd">    returns (DataFrame): contains data with traffic values matched to lagged</span>
+<span class="sd">        gdp data</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1">#splice dataframes</span>
+    <span class="n">gdp_df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">gdp_cols</span> <span class="o">+</span> <span class="n">area_cols</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+    <span class="n">traffic_df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">gdp_cols</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+    <span class="c1">#lag year</span>
+    <span class="n">gdp_df</span><span class="p">[</span><span class="n">year_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">gdp_df</span><span class="p">[</span><span class="n">year_col</span><span class="p">]</span> <span class="o">+</span> <span class="n">lag</span>
+
+    <span class="c1">#merge, dropping years we don&#39;t have both sets of data for</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">left</span> <span class="o">=</span> <span class="n">traffic_df</span><span class="p">,</span>
+                    <span class="n">right</span> <span class="o">=</span> <span class="n">gdp_df</span><span class="p">,</span>
+                    <span class="n">on</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;year_label&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">area_cols</span><span class="p">,</span>
+                    <span class="n">how</span> <span class="o">=</span> <span class="s2">&quot;inner&quot;</span>
+                   <span class="p">)</span></div>
+
+
+<span class="c1">#%%</span>
+
+<div class="viewcode-block" id="create_sources"><a class="viewcode-back" href="../data_vis.html#data_vis.create_sources">[docs]</a><span class="k">def</span> <span class="nf">create_sources</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> 
+                   <span class="n">traffic_feature</span><span class="p">,</span>
+                   <span class="n">nuts_level</span><span class="p">,</span>
+                   <span class="n">region_name</span><span class="p">,</span>
+                   <span class="n">gdp_feature</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;GDP Growth&quot;</span><span class="p">,</span><span class="s2">&quot;gdp&quot;</span><span class="p">],</span>
+                   <span class="n">nuts_col</span> <span class="o">=</span> <span class="s2">&quot;area_level&quot;</span><span class="p">,</span>
+                   <span class="n">region_col</span> <span class="o">=</span> <span class="s2">&quot;area_name&quot;</span>  
+                  <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;create_sources</span>
+<span class="sd">    </span>
+<span class="sd">    Creates sources for the joint_plot</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        df (DataFrame): data for the joint plot</span>
+<span class="sd">        nuts_level (string): heirarcical level for the region to create the</span>
+<span class="sd">            jointplot for</span>
+<span class="sd">        region_name (string): name of the region to create the jointplot for</span>
+<span class="sd">        gdp_feature (List): columns in df containing gdp data</span>
+<span class="sd">        nuts_col (string): column in df containing the nuts level for the </span>
+<span class="sd">            region</span>
+<span class="sd">        region_col (string): column in df containing the region name for the</span>
+<span class="sd">            data to plot</span>
+<span class="sd">            </span>
+<span class="sd">    returns source_list (List): data for joint_plot. Contains three </span>
+<span class="sd">        ColumnDataSource objects. The first two contain the data for the pdf </span>
+<span class="sd">        plots on the x and y axis. The third contains the data for the scatter</span>
+<span class="sd">        plot.           </span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="n">gdp_feature</span><span class="p">,</span> <span class="n">traffic_feature</span><span class="p">]</span>
+    <span class="c1">#make sure we sort by the index</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">nuts_col</span><span class="p">]</span> <span class="o">==</span> <span class="n">nuts_level</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">region_col</span><span class="p">]</span> <span class="o">==</span> <span class="n">region_name</span><span class="p">)</span>
+    
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+    
+    <span class="n">source_lst</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">all_feat_lst</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    
+    <span class="n">pdf_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+    
+    <span class="c1">#seperate column sources for gdp and traffic feature</span>
+    <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+    
+        <span class="n">pdf_feat_lst</span> <span class="o">=</span> <span class="p">[</span><span class="n">feature</span> <span class="o">+</span> <span class="s2">&quot;_density&quot;</span><span class="p">,</span>
+                        <span class="n">feature</span> <span class="o">+</span> <span class="s2">&quot;_support&quot;</span>
+                       <span class="p">]</span>
+        
+        <span class="n">all_feat_lst</span> <span class="o">=</span> <span class="n">all_feat_lst</span> <span class="o">+</span> <span class="n">pdf_feat_lst</span>
+        
+        <span class="n">pdf_df</span><span class="p">[</span><span class="n">pdf_feat_lst</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">pdf_df</span><span class="p">[</span><span class="n">pdf_feat_lst</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">get_pdf</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">feature</span><span class="p">])</span>
+    
+        <span class="n">source_lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ColumnDataSource</span><span class="p">(</span><span class="n">pdf_df</span><span class="p">))</span>
+    
+    <span class="c1">#combined column source</span>
+    <span class="n">source_lst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ColumnDataSource</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">features</span><span class="p">]))</span>
+    
+    <span class="k">return</span> <span class="n">source_lst</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Edward Rowland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

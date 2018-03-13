@@ -1,0 +1,396 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>feature_creation &#8212; traffic_gdp_report 0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for feature_creation</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Mon Nov 27 13:32:29 2017</span>
+
+<span class="sd">@author: eddr</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1">#%%</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">statsmodels.api</span> <span class="k">as</span> <span class="nn">sm</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="n">file_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file_dir</span><span class="p">)</span> <span class="c1"># assume other scripts are where we are</span>
+<span class="kn">import</span> <span class="nn">dataset_processing</span> <span class="k">as</span> <span class="nn">dat</span>
+
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="create_ratios"><a class="viewcode-back" href="../feature_creation.html#feature_creation.create_ratios">[docs]</a><span class="k">def</span> <span class="nf">create_ratios</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> 
+                  <span class="n">denom</span><span class="p">,</span> 
+                  <span class="n">numerators</span><span class="p">,</span> 
+                  <span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot;_ratio&quot;</span><span class="p">,</span> 
+                  <span class="n">inf_to_na</span> <span class="o">=</span> <span class="kc">True</span>
+                  <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;create_ratios</span>
+<span class="sd">    </span>
+<span class="sd">    computes ratios of traffic flow for the different vehcile types for each</span>
+<span class="sd">    observation</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        df (Dataframe): contains the traffic data</span>
+<span class="sd">        denom (string): column containing denominator value to compute ratios</span>
+<span class="sd">        numerators (array): column names containing numerator values </span>
+<span class="sd">            to compute ratios</span>
+<span class="sd">        suffix (string): column name suffix to store the ratio of each traffic</span>
+<span class="sd">            flow ratio computed here</span>
+<span class="sd">        inf_to_na (bool): change inf values to numpy.na values</span>
+<span class="sd">    </span>
+<span class="sd">    Returns: </span>
+<span class="sd">        df (Dataframe): as passed, with additional columns for the computed </span>
+<span class="sd">            ratios</span>
+<span class="sd">        </span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">numer</span> <span class="ow">in</span> <span class="n">numerators</span><span class="p">:</span>
+        <span class="n">col_name</span> <span class="o">=</span> <span class="n">numer</span> <span class="o">+</span> <span class="n">suffix</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">numer</span><span class="p">]</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">denom</span><span class="p">])</span>
+    
+        <span class="k">if</span> <span class="n">inf_to_na</span><span class="p">:</span> <span class="n">df</span><span class="p">[</span><span class="n">col_name</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+        
+        
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="compute_ratios"><a class="viewcode-back" href="../feature_creation.html#feature_creation.compute_ratios">[docs]</a><span class="k">def</span> <span class="nf">compute_ratios</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> 
+                   <span class="n">file_regex</span> <span class="o">=</span> <span class="s2">&quot;.*traffic_gdp_[0-9]&quot;</span><span class="p">,</span>
+                   <span class="n">flow_column_text</span> <span class="o">=</span> <span class="s2">&quot;fd&quot;</span><span class="p">,</span>
+                   <span class="n">all_veh_flow_col</span> <span class="o">=</span> <span class="s2">&quot;fdall_mv&quot;</span><span class="p">,</span>
+                   <span class="n">messages</span> <span class="o">=</span> <span class="kc">False</span>
+                  <span class="p">):</span>
+
+    <span class="c1">#files with data to compute ratios for</span>
+    <span class="n">traffic_data_files</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">files_looks_like</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span>
+                                              <span class="n">looks_like</span> <span class="o">=</span> <span class="n">file_regex</span>
+                                              <span class="p">)</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">traffic_data_files</span><span class="p">:</span>
+        
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loading </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">file</span><span class="p">)</span>
+        
+        <span class="n">traffic_gdp_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        
+        <span class="c1"># get the columns to compute ratios with </span>
+        <span class="n">mask</span> <span class="o">=</span>  <span class="p">[</span><span class="n">flow_column_text</span> <span class="ow">in</span> <span class="n">col</span> 
+                 <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span>  <span class="n">traffic_gdp_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="p">]</span>
+        <span class="n">numerators</span> <span class="o">=</span> <span class="n">traffic_gdp_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;computing ratios&quot;</span><span class="p">)</span>
+        <span class="c1"># remove the overall traffic flow as </span>
+        <span class="c1">#this will only give values of 1</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">numerators</span> <span class="o">==</span> <span class="n">all_veh_flow_col</span><span class="p">)</span>
+        <span class="n">numerators</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">numerators</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+
+        <span class="c1">#..and compute the ratios</span>
+        <span class="n">traffic_gdp_df</span> <span class="o">=</span> <span class="n">create_ratios</span><span class="p">(</span><span class="n">traffic_gdp_df</span><span class="p">,</span>
+                                       <span class="n">all_veh_flow_col</span><span class="p">,</span>
+                                       <span class="n">numerators</span>
+                                       <span class="p">)</span> 
+        <span class="c1">#overwrite that file</span>
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;saving&quot;</span><span class="p">)</span>
+        <span class="n">traffic_gdp_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">file</span><span class="p">)</span></div>
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="log_transform"><a class="viewcode-back" href="../feature_creation.html#feature_creation.log_transform">[docs]</a><span class="k">def</span> <span class="nf">log_transform</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">features</span> <span class="o">=</span>  <span class="kc">None</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;log_&quot;</span><span class="p">,</span> <span class="n">feature_str</span> <span class="o">=</span> <span class="s2">&quot;fd&quot;</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;log_transform</span>
+<span class="sd">    </span>
+<span class="sd">    creates log values for data in specified columns</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments: </span>
+<span class="sd">        df (Dataframe): data with values to transform</span>
+<span class="sd">        features (list): list of column names with values to covert to log</span>
+<span class="sd">        prefix (string): prefix to put on new columns with log values</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        df (Dataframe): the dataframe with new columns containing the log</span>
+<span class="sd">            transform data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#get features if we don&#39;t have any</span>
+    <span class="k">if</span> <span class="n">features</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span>  <span class="p">[(</span><span class="n">feature_str</span> <span class="ow">in</span> <span class="n">col</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+        
+    <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">feature</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">feature</span><span class="p">])</span>
+        <span class="c1">#change the infinite values so they ar easier to deal with/drop</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;log_&quot;</span> <span class="o">+</span> <span class="n">feature</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">],</span>
+                                     <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                                     <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="compute_log_transform"><a class="viewcode-back" href="../feature_creation.html#feature_creation.compute_log_transform">[docs]</a><span class="k">def</span> <span class="nf">compute_log_transform</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> 
+                          <span class="n">messages</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
+                          <span class="n">file_regex</span> <span class="o">=</span> <span class="s2">&quot;.*traffic_gdp_[0-9]&quot;</span><span class="p">,</span>
+                          <span class="n">feature_str</span> <span class="o">=</span> <span class="s2">&quot;fd&quot;</span><span class="p">,</span>
+                          <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;log&quot;</span>
+                          <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; compute_log_trasform</span>
+
+<span class="sd">        loads data stored in csvs in a folder and applies a log transform to</span>
+<span class="sd">        specified columns, then saves them as the same filename</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments:</span>
+<span class="sd">            loc (string): folder location with the datafiles inside</span>
+<span class="sd">            messages (bool): indicates whether to return printed messages</span>
+<span class="sd">            file_regex (string): regex expression to select the files to load</span>
+<span class="sd">            feature_str (string): to identify columns for log_transform</span>
+<span class="sd">            prefix (string): to add to column names with transformed data</span>
+<span class="sd">            </span>
+<span class="sd">        </span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    
+    <span class="n">files</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">files_looks_like</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">looks_like</span> <span class="o">=</span> <span class="n">file_regex</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loading: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;applying log transform&quot;</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">log_transform</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">feature_str</span> <span class="o">=</span> <span class="n">feature_str</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;saving&quot;</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">file</span><span class="p">)</span></div>
+
+<span class="c1">#%%</span>
+<div class="viewcode-block" id="get_road_cats"><a class="viewcode-back" href="../feature_creation.html#feature_creation.get_road_cats">[docs]</a><span class="k">def</span> <span class="nf">get_road_cats</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">road_col</span><span class="p">,</span> <span class="n">junc_col</span><span class="p">,</span> <span class="n">road_cat_col</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;get_road_cats</span>
+<span class="sd">    </span>
+<span class="sd">    finds the DFT road category for intersecting roads at the junction the </span>
+<span class="sd">    observation was recorded at.</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        df (DataFrame): road data</span>
+<span class="sd">        road_col (string): column in df that has road names with the DFT </span>
+<span class="sd">            category</span>
+<span class="sd">        junc_col (string): column in df containing intersecting roads we want</span>
+<span class="sd">            to find the road for</span>
+<span class="sd">        road_cat_col (string): column containting the category of road in </span>
+<span class="sd">            road_col</span>
+<span class="sd">            </span>
+<span class="sd">    Returns: </span>
+<span class="sd">        junc_type (list): list of road category for roads in junc_col</span>
+<span class="sd">        </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">junc_type</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="c1">#get the road name</span>
+    <span class="n">road_lst</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">road_col</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="c1">#sometimes two road names are given</span>
+    <span class="n">road_lst</span> <span class="o">=</span> <span class="p">[</span><span class="n">road</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">road</span> <span class="ow">in</span> <span class="n">road_lst</span><span class="p">]</span>
+    <span class="n">road_lst</span> <span class="o">=</span> <span class="p">[</span><span class="n">road</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">road</span> <span class="ow">in</span> <span class="n">road_lst</span><span class="p">]</span>
+    
+    
+    <span class="k">for</span> <span class="n">junc</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">junc_col</span><span class="p">]:</span>
+        <span class="c1">#incidate Local authority boundary</span>
+        <span class="k">if</span> <span class="n">junc</span> <span class="ow">is</span> <span class="s2">&quot;LA Boundary&quot;</span><span class="p">:</span> 
+            <span class="n">junc_type</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;LA&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">#find matching roads...</span>
+            <span class="n">road_mask</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">junc</span><span class="p">)</span> <span class="ow">in</span> <span class="n">road</span> <span class="k">for</span> <span class="n">road</span> <span class="ow">in</span> <span class="n">road_lst</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">road_mask</span><span class="p">):</span>
+                <span class="c1">#...get their category</span>
+                <span class="n">junc_type</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">road_cat_col</span><span class="p">][</span><span class="n">road_mask</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1">#...if we cant find the road</span>
+                <span class="n">junc_type</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            
+    <span class="k">return</span> <span class="n">junc_type</span></div>
+
+<span class="c1">#%%</span>
+    
+<div class="viewcode-block" id="classify_road"><a class="viewcode-back" href="../feature_creation.html#feature_creation.classify_road">[docs]</a><span class="k">def</span> <span class="nf">classify_road</span><span class="p">(</span><span class="n">road_names</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot;Classify_road</span>
+<span class="sd">    </span>
+<span class="sd">    the collection points list the junctions that the data is recorded from,</span>
+<span class="sd">    a-junction and b-junction. we create a new feature based upon this data</span>
+<span class="sd">    using the following rules</span>
+
+<span class="sd">    |data rule            | example                    |  classifiction |</span>
+<span class="sd">    |--------------------:|:--------------------------:|:---------------|</span>
+<span class="sd">    |first character is m | m79                        | Motorway       |</span>
+<span class="sd">    |first character is a | a38                        | a road         |</span>
+<span class="sd">    |first character is b | b3135                      | b road         |</span>
+<span class="sd">    |is &#39;la boundary&#39;     | &#39;la boundary&#39;              | boundary       |</span>
+<span class="sd">    |other                | church st, caerau, maesteg | minor road     |</span>
+<span class="sd">    |no alphanumeic text  | &quot;    &quot;                     | unclassified   | </span>
+
+<span class="sd">    </span>
+<span class="sd">    works out a type of junction for each junction</span>
+<span class="sd">    in a list</span>
+<span class="sd">    </span>
+<span class="sd">    Arguments:</span>
+<span class="sd">        road_names (Series): the road names </span>
+<span class="sd">    Returns</span>
+<span class="sd">        road_type(list) : road types</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">#get rid of NaNs etc</span>
+    <span class="n">null_mask</span> <span class="o">=</span> <span class="n">road_names</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span>
+    <span class="n">road_names</span><span class="p">[</span><span class="n">null_mask</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="c1"># so they are entered as unclassified</span>
+    
+    <span class="c1"># classifications of junctions </span>
+    <span class="n">road_type</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;motorway&quot;</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">road</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;m&quot;</span><span class="p">)</span>
+                 <span class="k">else</span> <span class="s2">&quot;a road&quot;</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">road</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">)</span> 
+                 <span class="k">else</span> <span class="s2">&quot;b road&quot;</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">road</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;b&quot;</span><span class="p">)</span> 
+                 <span class="k">else</span> <span class="s2">&quot;boundary&quot;</span> <span class="k">if</span> <span class="s2">&quot;la boundary&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">road</span><span class="p">)</span>
+                 <span class="k">else</span> <span class="s2">&quot;minor road&quot;</span> <span class="k">if</span> <span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">&quot;[a-zA-Z]&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">road</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>                         
+                 <span class="k">else</span> <span class="s2">&quot;unclassified&quot;</span> 
+                 <span class="k">for</span> <span class="n">road</span> <span class="ow">in</span> <span class="n">road_names</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> 
+                <span class="p">]</span>    
+    
+    <span class="k">return</span> <span class="n">road_type</span></div>
+
+<span class="c1">#%%</span>
+    
+<div class="viewcode-block" id="classify_junctions"><a class="viewcode-back" href="../feature_creation.html#feature_creation.classify_junctions">[docs]</a><span class="k">def</span> <span class="nf">classify_junctions</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span>  
+                       <span class="n">file_regex</span> <span class="o">=</span> <span class="s2">&quot;.*traffic_gdp_[0-9]&quot;</span><span class="p">,</span>
+                       <span class="n">ext</span> <span class="o">=</span> <span class="s2">&quot;csv&quot;</span><span class="p">,</span>
+                       <span class="n">messages</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                       <span class="n">a_col</span> <span class="o">=</span> <span class="s2">&quot;a-junction&quot;</span><span class="p">,</span>
+                       <span class="n">b_col</span> <span class="o">=</span> <span class="s2">&quot;b-junction&quot;</span><span class="p">,</span>
+                       <span class="n">cat_col</span> <span class="o">=</span> <span class="s2">&quot;rcat&quot;</span><span class="p">,</span>
+                       <span class="n">road_col</span> <span class="o">=</span> <span class="s2">&quot;road&quot;</span><span class="p">,</span>
+                       <span class="n">cat_suffix</span> <span class="o">=</span> <span class="s2">&quot;_cats&quot;</span><span class="p">,</span>
+                       <span class="n">class_suffix</span> <span class="o">=</span> <span class="s2">&quot;_class&quot;</span><span class="p">,</span>
+                       <span class="n">col_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;level_0&quot;</span><span class="p">:</span> <span class="s2">&quot;road_type&quot;</span><span class="p">,</span>
+                                   <span class="s2">&quot;level_1&quot;</span> <span class="p">:</span> <span class="s2">&quot;observation_no&quot;</span>
+                                   <span class="p">}</span>
+                      <span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;classify_junctions</span>
+<span class="sd">    </span>
+<span class="sd">    creates features to indicate road type of the roads that intersect at</span>
+<span class="sd">    the junction where the observation was made.</span>
+<span class="sd">    </span>
+<span class="sd">    loc (string): folder location with the datafiles inside</span>
+<span class="sd">    file_regex (string): regex expression to select the files to load</span>
+<span class="sd">    ext (string): extension of the files to load</span>
+<span class="sd">    messages(bool): indicate to print progress messages</span>
+<span class="sd">    a_col (string): column in where a junction is stored</span>
+<span class="sd">    b_col (string): column in where b junction is stored</span>
+<span class="sd">    cat_col (string): column in where road category is stored</span>
+<span class="sd">    road_col (string): column in where road name where the observation was made</span>
+<span class="sd">        is stored</span>
+<span class="sd">    cat_suffix (string): suffix to add to a_col and b_col to give the column</span>
+<span class="sd">        name for the categories for each of those</span>
+<span class="sd">    class_suffix (string): suffix to add to a_col and b_col to give the column</span>
+<span class="sd">        name for the categories for each of those</span>
+<span class="sd">    col_dict (dict): dictionary for renaming columns</span>
+<span class="sd">    </span>
+
+<span class="sd">    &quot;&quot;&quot;</span>        
+    <span class="c1">#list of files to load</span>
+    
+    <span class="n">files</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">files_looks_like</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">looks_like</span> <span class="o">=</span> <span class="n">file_regex</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">ext</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loading file </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;tweaking column names&quot;</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span> <span class="o">=</span> <span class="n">col_dict</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="c1">#categories</span>
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;finding junction categories&quot;</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">a_col</span> <span class="o">+</span> <span class="n">cat_suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_road_cats</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">road_col</span><span class="p">,</span> <span class="n">a_col</span><span class="p">,</span> <span class="n">cat_col</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">b_col</span> <span class="o">+</span> <span class="n">cat_suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_road_cats</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">road_col</span><span class="p">,</span> <span class="n">b_col</span><span class="p">,</span> <span class="n">cat_col</span><span class="p">)</span>
+        <span class="c1">#classes</span>
+        
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;finding junction classes&quot;</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">a_col</span> <span class="o">+</span> <span class="n">class_suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">classify_road</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">a_col</span><span class="p">])</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">b_col</span> <span class="o">+</span> <span class="n">class_suffix</span><span class="p">]</span> <span class="o">=</span> <span class="n">classify_road</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">b_col</span><span class="p">])</span>
+        
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;saving&quot;</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">messages</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;finished&quot;</span><span class="p">)</span> </div>
+        
+  
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Edward Rowland.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
