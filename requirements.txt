@@ -10,3 +10,4 @@ bokeh
 matplotlib
 scipy
 sklearn
+statsmodels
