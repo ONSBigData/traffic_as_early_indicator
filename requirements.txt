@@ -9,3 +9,4 @@ bokeh==0.12.13
 matplotlib==2.2.0
 scipy==1.0.0
 scikit-learn==0.19.1
+holoviews
