@@ -916,7 +916,8 @@ def get_growth(df,
 def load_stats(loc = os.getcwd() + "/working/data/",
                name = "traffic_stats.csv",
                year_col = "year",
-               year_label_col = "year_label"
+               year_label_col = "year_label",
+               format_year = True
                ):
     """load_stats
     
@@ -930,17 +931,19 @@ def load_stats(loc = os.getcwd() + "/working/data/",
             collected
         year_label_col (string); Column in df where the year is shown as an
             integer, useful for plotting.
+        format_year (bool): format year or not
     Returns: 
         df (Dataframe): Contains the descriptive statistics 
     """
     
     df = pd.read_csv(loc + name)
+
+    if format_year:
+        #format year
+        df[year_col] = pd.to_datetime(df[year_col], format = "%Y-%m-%d")
+        #int for plotting
+        df[year_label_col] = [int(date.year) for date in df[year_col]]
     
-    #format year
-    df[year_col] = pd.to_datetime(df[year_col], format = "%Y-%m-%d")
-    #int for plotting
-    
-    df[year_label_col] = [int(date.year) for date in df[year_col]]
     return df
 
 #%%

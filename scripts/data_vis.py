@@ -14,6 +14,7 @@ the traffic flow and GDP data.
 import os
 import sys
 
+import itertools as it
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
@@ -22,10 +23,11 @@ import statsmodels.api as sm
 
 #plotting
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource,  Label, LinearAxis, Title
+from bokeh.models import ColumnDataSource,  Label, LinearAxis, Title, LinearColorMapper, ColorBar, BasicTicker
 from bokeh.models.widgets import Panel, Tabs
 from bokeh.layouts import gridplot
-from bokeh.palettes import Category10
+from bokeh.palettes import Category10, Plasma256
+from bokeh.transform import transform
 
 #stats
 from scipy.signal import correlate
@@ -38,15 +40,16 @@ sys.path.append(file_dir) # assume other scripts are where we are
 
 #%%
 def multiline_plot(src,
-                   key_names,
                    title,
                    x_label,
                    y_label,
                    x_feature,
+                   key_names = None,
                    data_cols = None,
                    colours = Category10,
                    bold_col = "red",
-                   bold_thick = 1.5,
+                   line_thick = 1.5,
+                   bold_think = 1.5,
                    bold_feature = "gdp_growth",
                    alpha = 0.75,
                    tb_loc = "above",
@@ -75,7 +78,7 @@ def multiline_plot(src,
         data_cols (list): the columns containing data to plot
         colours (Palette): Colour palette to use when plotting
         bold_col (string): Colour for the highligted data series
-        bold_thick (numeric): Line thickness for the highlighted data series 
+        line_thick (numeric): Line thickness for the highlighted data series
         bold_feature "string": name of the column in src containing data to 
             highlight
         alpha (numeric): alpha (transparency) of the plotted lines
@@ -105,29 +108,37 @@ def multiline_plot(src,
                   plot_width = plot_width , 
                   plot_height = plot_height
                   )
-    
+
+    #create colour palette cycler
+    colour_cycler = it.cycle(colours)
+
     #plot the data
     for item, key, col in zip(data_cols, 
                               key_names,
-                              colours[len(data_cols)]
+                              colour_cycler
                              ):
         #is this a feature we plot with a thicker red line?
         if item == bold_feature:
             plot.line(x_feature, 
                       item, 
                       line_color = bold_col,
-                      line_width = bold_thick,
+                      line_width = line_thick * bold_think,
                       legend = key,
                       source = src
-                     )
+                      )
+            if messages:
+                print(key)
         else:
             plot.line(x_feature,
                       item,
                       line_color = col,
                       source = src,
                       legend = key,
-                      line_alpha = alpha
-                     )
+                      line_alpha = alpha,
+                      line_width = line_thick
+                      )
+            if messages:
+                print(key)
             
     #make sure all the ticks are labeled
     n_ticks = len(src.to_df().index.unique().tolist())
@@ -145,6 +156,7 @@ def multiline_plot(src,
 def cross_correlation_charts(df,
                              data_cols, 
                              key_names,
+                             corr_name,
                              colour = Category10,
                              corr_col = "gdp_growth",
                              x_label = "Lag (years)",
@@ -154,7 +166,8 @@ def cross_correlation_charts(df,
                              plot_y = 400,
                              lag_line_col = "black",
                              lag_line_alpha = 0.75,
-                             lag_line_dash = "dashed"
+                             lag_line_dash = "dashed",
+                             messages = True
                             ):
     """cross_correlation_charts
     
@@ -194,9 +207,11 @@ def cross_correlation_charts(df,
     #as no key names have been specified
     if key_names is None: key_names = data_cols
     
+    if corr_name is None: corr_name = corr_col
+    
     #remove the one column we are correlating everything else with
     feat_cols = [col 
-                 for col in df.columns.tolist()
+                 for col in data_cols
                  if col != corr_col
                 ]
     lags = [i for i in range(-len(df.index),
@@ -204,6 +219,11 @@ def cross_correlation_charts(df,
                             )]
     
     plot_lst = list()
+    if messages:
+        print(data_cols)
+        print(feat_cols)
+        print(colour)
+        print(key_names)
     for col, colour, name in zip(feat_cols, colour[len(feat_cols)], key_names):
         
         #compute cross_correlation
@@ -214,9 +234,15 @@ def cross_correlation_charts(df,
         max_overlap = lags[max_index]
         max_line_y = [i for i in range(int(max(y)))]
         max_line_x = [max_overlap] * len(max_line_y)
-        
+
+        # #min value to for -ve correlations
+        # min_index = np.argmin(y)
+        # min_overlap = lags[min_index]
+        # min_line_y = [i for i in range(int(min(y)))]
+        # min_line_x = [min_overlap] * len(min_line_y)
+        #
         #create figure
-        plot_title = ("GDP growth and " 
+        plot_title = (corr_name + " and " 
                       + name 
                       + " mean flow cross-correlation"
                      )
@@ -236,15 +262,23 @@ def cross_correlation_charts(df,
                line_width = 2
               )
         
-        #indicate max lag
+        #indicate max and min points for lag
         p.line(max_line_x,
                max_line_y,
                line_color = lag_line_col,
                line_alpha = lag_line_alpha,
                line_dash = lag_line_dash
                )
-        
-        label_text = ("Max overlap at lag of %s years"  %max_overlap)
+
+        # p.line(min_line_x,
+        #        min_line_y,
+        #        line_color = lag_line_col,
+        #        line_alpha = lag_line_alpha,
+        #        line_dash = lag_line_dash
+        #        )
+
+        label_text = ("Max overlap at lag of {} years".format(max_overlap))
+
         label = Label(x = 5,
                       y = 30,
                       x_units='screen',
@@ -255,6 +289,7 @@ def cross_correlation_charts(df,
                       border_line_alpha = 0.5,
                       background_fill_color = 'white'
                      )
+
         #create tabbed plots
         p.add_layout(label)
         tab = Panel(child = p, title = name)
@@ -644,7 +679,8 @@ def create_sources(df,
                    region_name,
                    gdp_feature = ["GDP Growth","gdp"],
                    nuts_col = "area_level",
-                   region_col = "area_name"  
+                   region_col = "area_name"
+
                   ):
     """create_sources
     
@@ -697,3 +733,191 @@ def create_sources(df,
     source_lst.append(ColumnDataSource(df[features]))
     
     return source_lst
+
+
+def create_corr_df(df,
+                   x_features,
+                   x_name,
+                   y_features = None,
+                   y_name = None,
+                   coef_name = "R"
+                   ):
+    """
+    Takes a Dataframe and correalates two sets of features in that DataFrame and
+        returns the coefficients in a tall DataFrame
+    Args:
+        df (DataFrame): contains x and y features to correlate
+        x_features (list): first set of features to correlate
+        x_name (String): name of the column containing x_features in the returned DataFrame
+        y_features (list): second set of features to correlate - optional; will correlate
+            x_features with itself if not given
+        y_name (String): name of the column containing y_features in the returned DataFrame
+            - optional; if not passed is [x_name]_2
+        coef_name: name of the coefficents column in returned DataFrame
+
+    Returns:
+        corr_df (DataFrame): Tall format dataframe containing columns for both sets of
+            correlated features and the correlation coefficent
+
+    """
+    # do we only have one set of features?
+    if y_features is None: y_features = x_features
+    if y_name is None: y_name = "".format("{}_2", x_name)
+
+    # initialise array
+    corr_arr = np.zeros((len(y_features), len(x_features)))
+
+    # populate the array with correlation coefs
+    for x, y in it.product(x_features, y_features):
+        y_pos = y_features.index(y)
+        x_pos = x_features.index(x)
+        corr_arr[y_pos, x_pos] = np.corrcoef(df[y],
+                                             df[x]
+                                             )[1, 0]
+
+    # turn into pandas DataFrame and reshape into tall
+    corr_df = pd.DataFrame(corr_arr, index = y_features, columns = x_features)
+    corr_df.index.name = y_name
+    corr_df.columns.name = x_name
+    corr_df = corr_df.reset_index().melt(id_vars = y_name, value_name = coef_name)
+
+    return corr_df
+
+
+def create_heatmap(df,
+                   x_col = "eco_ind",
+                   y_col = "vehicle_type",
+                   val_col = "R",
+                   colour_palette = Plasma256[::1],
+                   title_text = "traffic flow vs economic indicators",
+                   plot_shape = [1000, 1000],
+                   rect_shape = [1, 1],
+                   n_ticks = 9,
+                   min_val = -1,
+                   max_val = 1
+                   ):
+
+    """
+    creates a bokeh plot of a heatmap between two columns in a pandas dataframe
+    Args:
+        df (DataFrame): contains values to plot
+        x_col(String): name of col containing features to plot on the x axis
+        y_col(String): name of col containing features to plot on the y axis
+        val_col(String): name of column containing values to colur
+        colour_palette: bokeh colour palette to use for the graph
+        title_text(String): name of the graph
+        plot_shape (iterable): dimensions of the plot
+        rect_shape (iterable): dimensions of the rectangles making up the heatmap
+        n_ticks (int): number of ticks to display on the colour bar
+        min_val (numeric): min val for the colour bar
+        max_val (numeric): max val for the colour bar
+
+    Returns: bokeh plot object
+
+    """
+    # make things we need
+
+    src = ColumnDataSource(df)
+
+    colour_mapper = LinearColorMapper(palette = colour_palette,
+                                      low = min_val,
+                                      high = max_val
+                                      )
+    colours = transform(val_col, colour_mapper)
+
+    # create the figure
+    p = figure(plot_width = plot_shape[0],
+               plot_height = plot_shape[1],
+               x_range = list(df[x_col].drop_duplicates()),
+               y_range = list(df[y_col].drop_duplicates()),
+               toolbar_location = 'above',
+               tools = "",
+               title = title_text
+               )
+
+    # make the heatmap
+    p.rect(x = x_col,
+           y = y_col,
+           width = rect_shape[0],
+           height = rect_shape[1],
+           source = src,
+           fill_color = colours,
+           line_color = None
+           )
+
+    # colour key
+    color_bar = ColorBar(color_mapper = colour_mapper,
+                         location = (0, 0),
+                         ticker = BasicTicker(desired_num_ticks = n_ticks)
+                        )
+
+    # stick them together
+    p.add_layout(color_bar, 'right')
+
+    return p
+
+def auto_corr_plot(src,
+                   title,
+                   plot_shape = [450,300],
+                   x_label = "lag",
+                   y_label = "autocorrelation",
+                   lag_col = "lag",
+                   corr_col = "auto_corr",
+                   symbol_colour = "mediumseagreen",
+                   symbol_size = 8,
+                   line_colour = "cornflowerblue",
+                   line_width = 2,
+                   err_colour = "darkseagreen",
+                   err_alpha = 0.2,
+                   plot_errors = True,
+                   err_cols = ["upper_err", "lower_err"]
+                   ):
+
+    # create the plot from the autocorrelation results
+    plot = figure(title = title,
+                  x_axis_label = x_label,
+                  y_axis_label = y_label,
+                  plot_width=plot_shape[0],
+                  plot_height=plot_shape[1],
+                  )
+
+    if plot_errors:
+
+        #set up the variables for the patch to plot errors
+        x_err = np.delete(src.data[lag_col], 0)
+        up_err = np.delete(src.data[err_cols[0]] - src.data[corr_col], 0)
+        low_err = np.delete(src.data[err_cols[1]] - src.data[corr_col], 0)
+
+        band_x = np.append(x_err, x_err[::-1])
+        band_y = np.append(low_err, up_err[::-1])
+
+        # and plot the patch for the errors
+        plot.patch(band_x,
+                   band_y,
+                   color = err_colour,
+                   fill_alpha = err_alpha
+                   )
+
+    # plot the "stems"
+    plot.segment(x0 = lag_col,
+                 y0 = 0,
+                 x1 = lag_col,
+                 y1 = corr_col,
+                 source = src,
+                 color = line_colour,
+                 line_width = line_width
+                 )
+
+    # plot the leaves
+    plot.circle(x = lag_col,
+                y = corr_col,
+                size = symbol_size,
+                color = symbol_colour,
+                line_color = line_colour,
+                line_width = line_width,
+                source = src
+                )
+
+    return plot
+
+
